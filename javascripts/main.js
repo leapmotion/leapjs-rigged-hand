@@ -170,6 +170,29 @@
         var dip = leapToScene( frame , f.dipPosition );
         var tip = leapToScene( frame , f.tipPosition );
 
+        var lh = leapHand;
+
+        handDir = new THREE.Vector3( lh[0] , lh[1] , lh[2] ).normalize();
+
+        mcpToPip = new THREE.Vector3().subVectors( pip , mcp ).normalize();
+        pipToDip = new THREE.Vector3().subVectors( dip , pip ).normalize();
+        dipToTip = new THREE.Vector3().subVectors( pip , tip ).normalize();
+
+
+        var mcpBone       = findBone( i , 0 );
+        mcpFromTo         = quaternionFromTo( handDir , mcpToPip );
+        mcpBone.rotation  = mcpFromTo.multiply( handmesh.quaternion );
+       
+        var pipBone       = findBone( i , 1 );
+        pipFromTo         = quaternionFromTo( mcpToPip , pipToDip );
+        pipBone.rotation  = pipFromTo.multiply( mcpBone.rotation );
+
+        var dipBone       = findBone( i , 2 );
+        dipFromTo         = quaternionFromTo( pipToDip , dipToTip );
+        dipBone.rotation  = pipFromTo.multiply( pipBone.rotation );
+
+
+
         //console.log( tip );
         
 
@@ -180,5 +203,21 @@
       
   }
 
+  
+  function findBone( mesh , finger , whichBone ){
+
+
+
+    return bone
+
+  }
+
+
+  // TODO: the hard stuff!
+  function quaternionFromTo(from , to){
+
+
+    return new THREE.Quaternion();
+  }
 
 
