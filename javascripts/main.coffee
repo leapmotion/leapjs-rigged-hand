@@ -59,28 +59,42 @@ scene.add(sphere)
 animation = undefined
 handMesh = undefined
 
+(new THREE.JSONLoader).load 'javascripts/blender-export-from-collada-from-maya.json',  (geometry) ->
+  (new THREE.SceneLoader).load 'javascripts/right-hand-via-fbx-py-converter.json',  (object) ->
+    geometry.faces = object.geometries.Geometry_64_g0_01.faces
+    geometry.vertices = object.geometries.Geometry_64_g0_01.vertices
+    console.log 'loaded', geometry
+  #    geometry = object.geometries.Geometry_64_g0_01
+    THREE.GeometryUtils.center(geometry)
+#    debugger
+#    object.materials.phong1.skinning = true
+    handMesh = new THREE.SkinnedMesh( geometry, object.materials.phong1)
+    handMesh.useVertexTexture = false
+    handMesh.scale = new THREE.Vector3(0.01,0.01,0.01)
 
-(new THREE.SceneLoader).load 'javascripts/right-hand.json',  (object) ->
-  console.log 'loaded', object
-  geometry = object.geometries.Geometry_64_g0_01
-  THREE.GeometryUtils.center(geometry)
-  handMesh = new THREE.SkinnedMesh( geometry, object.materials.phong1)
-  handMesh.useVertexTexture = false
-  handMesh.scale = new THREE.Vector3(0.01,0.01,0.01)
+    # First we apply a base transform, to make the hand oriented how we want it:
+    baseQuaternion = (new THREE.Quaternion).setFromEuler(new THREE.Euler(-Math.PI / 2, 0, -Math.PI / 2 , 'XYZ'))
+    handMesh.quaternion = baseQuaternion
+    scene.add handMesh
 
-  # First we apply a base transform, to make the hand oriented how we want it:
-  baseQuaternion = (new THREE.Quaternion).setFromEuler(new THREE.Euler(-Math.PI / 2, 0, -Math.PI / 2 , 'XYZ'))
-  handMesh.quaternion = baseQuaternion
-  scene.add handMesh
 
-  Leap.loop (frame)->
-    if leapHand = frame.hands[0]
-      handMesh.position.x = leapHand.stabilizedPalmPosition[0] / 10
-      handMesh.position.y = leapHand.stabilizedPalmPosition[1] / 10
-      handMesh.position.z = leapHand.stabilizedPalmPosition[2] / 10
+    Leap.loop (frame)->
+      if leapHand = frame.hands[0]
+        handMesh.position.x = leapHand.stabilizedPalmPosition[0] / 10
+        handMesh.position.y = leapHand.stabilizedPalmPosition[1] / 10
+        handMesh.position.z = leapHand.stabilizedPalmPosition[2] / 10
 
-      handMesh.quaternion = baseQuaternion.clone().multiply((new THREE.Quaternion).setFromEuler(
-        new THREE.Euler(leapHand.roll(), leapHand.direction[1], -leapHand.direction[0], 'XYZ' )
-      ))
+        handMesh.quaternion = baseQuaternion.clone().multiply((new THREE.Quaternion).setFromEuler(
+          new THREE.Euler(leapHand.roll(), leapHand.direction[1], -leapHand.direction[0], 'XYZ' )
+        ))
 
-    renderer.render(scene, camera)
+#        handMesh.bones[0].rotateX(Math.PI / 2).rotateY(Math.PI / 2)
+#        handMesh.bones[1].rotateX(Math.PI / 2).rotateY(Math.PI / 2)
+#        handMesh.bones[2].rotateX(Math.PI / 2).rotateY(Math.PI / 2)
+#        for bone in handMesh.bones
+#          bone.rotation.set(0.5,0.5,0.5)
+#        object.objects["Bip01 R Hand"].rotateX(Math.PI / 2).rotateY(Math.PI / 2)
+#        object.objects["Bip01 R Finger3"].rotateX(Math.PI / 2).rotateY(Math.PI / 2)
+#        object.objects["Bip01 R Finger32"].rotateX(Math.PI / 2).rotateY(Math.PI / 2)
+
+      renderer.render(scene, camera)

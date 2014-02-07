@@ -14771,6 +14771,7 @@ THREE.SkinnedMesh = function ( geometry, material, useVertexTexture ) {
 THREE.SkinnedMesh.prototype = Object.create( THREE.Mesh.prototype );
 
 THREE.SkinnedMesh.prototype.addBone = function( bone ) {
+  console.log('add bone');
 
 	if ( bone === undefined ) {
 
@@ -14833,7 +14834,6 @@ THREE.SkinnedMesh.prototype.updateMatrixWorld = function () {
 		// make a snapshot of the bones' rest position
 
 		if ( this.boneInverses == undefined ) {
-
 			this.boneInverses = [];
 
 			for ( var b = 0, bl = this.bones.length; b < bl; b ++ ) {
@@ -14845,7 +14845,6 @@ THREE.SkinnedMesh.prototype.updateMatrixWorld = function () {
 				this.boneInverses.push( inverse );
 
 			}
-
 		}
 
 		// flatten bone matrices to array
