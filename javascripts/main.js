@@ -10,7 +10,7 @@
   //Global Leap Data for debugging:
   var leapHand;
 
-  var sceneSize = 100;
+  var sceneSize = 20;
 
   init();
 
@@ -31,7 +31,7 @@
 
 
     camera = new THREE.PerspectiveCamera(90, WIDTH / HEIGHT, 10, 1000);
-    camera.position.z = -sceneSize;
+    camera.position.z = sceneSize;
     camera.lookAt(new THREE.Vector3());
 
     scene = new THREE.Scene();
@@ -90,30 +90,20 @@
       handMesh.rotation.z = Math.PI / 100;
 
       var baseEuler = new THREE.Euler(-Math.PI / 2, 0, -Math.PI / 2, 'XYZ');
-      baseQuaternion = new THREE.Quaternion().setFromEuler( baseEuler);
+      baseQuaternion = new THREE.Quaternion().setFromEuler( baseEuler );
       handMesh.quaternion = baseQuaternion;
 
 
       scene.add( handMesh );
 
       controller = new Leap.Controller();
-      controller.on( 'frame' ,function(){
-       
-        console.log('HWOS');
-        
-      });
-
-      controller.on( 'connect' , function(){
-
-        console.log('YUP');
-
-      });
+      controller.on( 'frame' , leapLoop );
       controller.connect();
-
-      console.log( controller );
 
       
     });
+
+    render();
 
     
   }
@@ -148,7 +138,6 @@
   
   function leapLoop(frame) {
        
-    console.log('frame' );
     if ( frame.hands[0] ) {
      
       leapHand = frame.hands[0];
@@ -167,15 +156,25 @@
      
       handMesh.quaternion.multiply(newQuat);
 
-      for( var i = 0; i < leapHand.fingers.length; i++ ){
 
+      //TODO:
+      //apply to thumb as well. 
+      // Our rigged hand doesn't have the amount of
+      // bones in thumb!
+      for( var i = 1; i < leapHand.fingers.length; i++ ){
+
+        
         var f = leapHand.fingers[i];
         var mcp = leapToScene( frame , f.mcpPosition );
+        var pip = leapToScene( frame , f.pipPosition );
+        var dip = leapToScene( frame , f.dipPosition );
+        var tip = leapToScene( frame , f.tipPosition );
+
+        //console.log( tip );
+        
+
 
       }
-
-
-      console.log('HO');
     
     }
       
