@@ -1,6 +1,5 @@
 HEIGHT = window.innerHeight
 WIDTH = window.innerWidth
-console.log WIDTH, HEIGHT
 
 renderer = new THREE.WebGLRenderer( alpha: true )
 #renderer.setClearColor( 0x000000, 0)
@@ -10,14 +9,13 @@ document.getElementById('threejs').appendChild(renderer.domElement)
 
 
 camera = new THREE.PerspectiveCamera(
-  90, # make leap-dependent?
+  90,
   WIDTH / HEIGHT,
   10,
   1000
 )
 
-
-camera.position.z = 40
+camera.position.z = 30
 camera.position.x = 10
 camera.position.y = 10
 camera.lookAt(new THREE.Vector3(0,0,0))
@@ -29,6 +27,9 @@ scene.add new THREE.AxisHelper(50)
 
 
 scene.add new THREE.AmbientLight( 0x222222)
+directionalLight = new THREE.DirectionalLight(  0xffffff, 0.5 )
+directionalLight.position.set( 0, 1, 1000 );
+scene.add( directionalLight );
 
 pointLight = new THREE.PointLight(0xFFffff)
 pointLight.position =  new THREE.Vector3(20,20,10)
@@ -42,7 +43,7 @@ rectangle = new THREE.Mesh(
       color: 0x00ff00
     })
   )
-rectangle.position = new THREE.Vector3(0,0,10)
+rectangle.position = new THREE.Vector3(0,0,0)
 scene.add(rectangle)
 
 
@@ -55,38 +56,31 @@ sphere = new THREE.Mesh(
 sphere.position = new THREE.Vector3(10,10,0)
 scene.add(sphere)
 
-loader = new THREE.JSONLoader()
 animation = undefined
 handMesh = undefined
 
-handRoll = 0
 
-# load the model and create everything
-loader.load 'javascripts/right-hand-isaac.json',  (geometry, materials) ->
+(new THREE.SceneLoader).load 'javascripts/right-hand.json',  (object) ->
+  console.log 'loaded', object
+  geometry = object.geometries.Geometry_64_g0_01
   THREE.GeometryUtils.center(geometry)
-  handMesh = new THREE.SkinnedMesh( geometry, new THREE.MeshFaceMaterial(materials))
+  handMesh = new THREE.SkinnedMesh( geometry, object.materials.phong1)
+  handMesh.useVertexTexture = false
+  handMesh.scale = new THREE.Vector3(0.01,0.01,0.01)
+
+  # First we apply a base transform, to make the hand oriented how we want it:
+  baseQuaternion = (new THREE.Quaternion).setFromEuler(new THREE.Euler(-Math.PI / 2, 0, -Math.PI / 2 , 'XYZ'))
+  handMesh.quaternion = baseQuaternion
   scene.add handMesh
 
-#  handMesh.quaternion.setFromAxisAngle(
-#    new THREE.Vector3( sphere.position.x, sphere.position.y, sphere.position.z ).normalize()
-#  , (Math.PI / 2) * 2
-#  )
-#  p = new THREE.Vector3( sphere.position.x, sphere.position.y, sphere.position.z ).normalize()
-#  handMesh.quaternion = new THREE.Quaternion(p.x, p.y, p.z, 1).normalize()
-#  rectangle.lookAt(sphere.position)
-#  renderer.render(scene, camera)
   Leap.loop (frame)->
     if leapHand = frame.hands[0]
-      rectangle.position.x = leapHand.stabilizedPalmPosition[0] / 10
-      rectangle.position.y = leapHand.stabilizedPalmPosition[1] / 10
-      rectangle.position.z = leapHand.stabilizedPalmPosition[2] / 10
-#      sphere.position.x = leapHand.direction[0] * 10
-      handRoll = leapHand.roll()
+      handMesh.position.x = leapHand.stabilizedPalmPosition[0] / 10
+      handMesh.position.y = leapHand.stabilizedPalmPosition[1] / 10
+      handMesh.position.z = leapHand.stabilizedPalmPosition[2] / 10
 
-      rectangle.rotation = new THREE.Euler(
-        leapHand.direction[1], #,
-        -leapHand.direction[0],
-        handRoll
-        'XYZ'
-      )
+      handMesh.quaternion = baseQuaternion.clone().multiply((new THREE.Quaternion).setFromEuler(
+        new THREE.Euler(leapHand.roll(), leapHand.direction[1], -leapHand.direction[0], 'XYZ' )
+      ))
+
     renderer.render(scene, camera)
