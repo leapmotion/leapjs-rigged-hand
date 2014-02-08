@@ -74,31 +74,43 @@
     scene.add(sphere);
 
     var loader = new THREE.JSONLoader();
-    loader.load( 'javascripts/riggedHand.js' , function( geometry , materials ){
+    loader.load( 'handModel/blender.json' , function( geometry , materials ){
 
-      for (var i = 0; i < materials.length; i++) {
-        var mat = materials[i];
+      new THREE.SceneLoader().load( 'handModel/fbxPy.json' , function(object ){
 
-        mat.skinning = true;
-      }
+        //console.log( object );
 
-      handMesh = new THREE.SkinnedMesh(
-        geometry,
-        new THREE.MeshFaceMaterial(materials)
-      );
+        geometry.faces = object.geometries.Geometry_64_g0_01.faces;
+        geometry.vertices = object.geometries.Geometry_64_g0_01.vertices;
 
-      handMesh.rotation.z = Math.PI / 100;
+        materials = object.materials ;
+        THREE.GeometryUtils.center(geometry);
+        
+       
+        console.log( geometry );
+        
+        /*handMesh = new THREE.SkinnedMesh(
+          geometry,
+          new THREE.MeshFaceMaterial(materials)
+        );*/
 
-      var baseEuler = new THREE.Euler(-Math.PI / 2, 0, -Math.PI / 2, 'XYZ');
-      baseQuaternion = new THREE.Quaternion().setFromEuler( baseEuler );
-      handMesh.quaternion = baseQuaternion;
+        handMesh = new THREE.SkinnedMesh( geometry, object.materials.phong1)
+        handMesh.useVertexTexture = false
+        handMesh.scale = new THREE.Vector3(0.01,0.01,0.01)
 
+        handMesh.rotation.z = Math.PI / 100;
 
-      scene.add( handMesh );
+        var baseEuler = new THREE.Euler(-Math.PI / 2, 0, -Math.PI / 2, 'XYZ');
+        baseQuaternion = new THREE.Quaternion().setFromEuler( baseEuler );
+        handMesh.quaternion = baseQuaternion;
 
-      controller = new Leap.Controller();
-      controller.on( 'frame' , leapLoop );
-      controller.connect();
+        scene.add( handMesh );
+
+        controller = new Leap.Controller();
+        controller.on( 'frame' , leapLoop );
+        controller.connect();
+
+      });
 
       
     });
@@ -179,15 +191,15 @@
         dipToTip = new THREE.Vector3().subVectors( pip , tip ).normalize();
 
 
-        var mcpBone       = findBone( i , 0 );
+        var mcpBone       = findBone( handMesh , i , 0 );
         mcpFromTo         = quaternionFromTo( handDir , mcpToPip );
-        mcpBone.rotation  = mcpFromTo.multiply( handmesh.quaternion );
+        mcpBone.rotation  = mcpFromTo.multiply( handMesh.quaternion );
        
-        var pipBone       = findBone( i , 1 );
+        var pipBone       = findBone( handMesh , i , 1 );
         pipFromTo         = quaternionFromTo( mcpToPip , pipToDip );
         pipBone.rotation  = pipFromTo.multiply( mcpBone.rotation );
 
-        var dipBone       = findBone( i , 2 );
+        var dipBone       = findBone( handMesh , i , 2 );
         dipFromTo         = quaternionFromTo( pipToDip , dipToTip );
         dipBone.rotation  = pipFromTo.multiply( pipBone.rotation );
 
@@ -206,9 +218,11 @@
   
   function findBone( mesh , finger , whichBone ){
 
+    var bones = mesh.bones;
 
+    var index = finger * 4 + whichBone + 1;
 
-    return bone
+    return bones[index];
 
   }
 
@@ -216,8 +230,14 @@
   // TODO: the hard stuff!
   function quaternionFromTo(from , to){
 
+    var fromNorm  = from.clone().normalize();
+    var toNorm    = to.clone().normalize();
 
-    return new THREE.Quaternion();
+    var axis  = fromNorm.cross( toNorm );
+    var angle = Math.asin( axis.length() ); 
+
+
+    return new THREE.Quaternion().setFromAxisAngle( axis , angle );
   }
 
 
