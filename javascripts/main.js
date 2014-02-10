@@ -30,7 +30,7 @@
     document.getElementById('threejs').appendChild(renderer.domElement);
 
 
-    camera = new THREE.PerspectiveCamera(90, WIDTH / HEIGHT, 10, 1000);
+    camera = new THREE.PerspectiveCamera(90, WIDTH / HEIGHT, sceneSize / 100 , 1000);
     camera.position.z = sceneSize;
     camera.lookAt(new THREE.Vector3());
 
@@ -74,7 +74,36 @@
     scene.add(sphere);
 
     var loader = new THREE.JSONLoader();
-    loader.load( 'handModel/blender.json' , function( geometry , materials ){
+
+    loader.load('handModel2/riggedHand.js', function (geometry, materials) {
+      var hand, material;
+
+      handMesh = new THREE.SkinnedMesh(
+        geometry,
+        new THREE.MeshFaceMaterial(materials)
+      );
+
+      material = handMesh.material.materials;
+
+      for (var i = 0; i < materials.length; i++) {
+        var mat = materials[i];
+
+        mat.skinning = true;
+      }
+        
+      var baseEuler = new THREE.Euler(0, -Math.PI/2, 0, 'XYZ');
+      
+      handMesh.rotation = baseEuler;
+        
+      scene.add( handMesh );
+
+      controller = new Leap.Controller();
+      controller.on( 'frame' , leapLoop );
+      controller.connect();
+
+    });
+
+    /*loader.load( 'handModel/blender.json' , function( geometry , materials ){
 
       new THREE.SceneLoader().load( 'handModel/fbxPy.json' , function(object ){
 
@@ -89,12 +118,9 @@
        
         console.log( geometry );
         
-        /*handMesh = new THREE.SkinnedMesh(
-          geometry,
-          new THREE.MeshFaceMaterial(materials)
-        );*/
-
-        handMesh = new THREE.SkinnedMesh( geometry, object.materials.phong1)
+      
+        object.materials.phong1.skinning = true;
+        handMesh = new THREE.SkinnedMesh( geometry, object.materials.phong1);
         handMesh.useVertexTexture = false
         handMesh.scale = new THREE.Vector3(0.01,0.01,0.01)
 
@@ -113,11 +139,19 @@
       });
 
       
-    });
+    });*/
 
     render();
 
     
+  }
+
+  function Vector3( v ){
+
+   // console.log( v );
+    var vector = new THREE.Vector3( v[0] , v[1] , v[2] );
+    return vector
+
   }
 
   function leapToScene( frame , position ){
@@ -157,17 +191,39 @@
       var spp =  leapHand.stabilizedPalmPosition;
       handMesh.position = leapToScene( frame , spp );
 
-      handMesh.quaternion = baseQuaternion.clone();
+      var dir   = Vector3( leapHand.direction );
+      var norm  = Vector3( leapHand.palmNormal );
+      var cross = new THREE.Vector3().crossVectors( dir , norm );
       
+      //BASIS CHOICE:
+      //Index Finger == -Z == dir
+      //Middle Finger == -Y == norm
+      //Thumb == -X == cross
+
+      var matrix = new THREE.Matrix4(
+      
+          -cross.x  , -norm.x , -dir.x  , 0 ,
+          -cross.y  , -norm.y , -dir.y  , 0 ,
+          -cross.z  , -norm.z , -dir.z  , 0 ,
+          0         , 0       , 0       , 1 
+
+      );
+
+      handMesh.rotation.setFromRotationMatrix( matrix );
+      //console.log( matrix );
+
+
+      //handMesh.quaternion = baseQuaternion.clone();
+      /*
       var x = leapHand.roll();
-      var y = leapHand.direction[1];
-      var z = -leapHand.direction[0];
+      var y = leapHand.yaw();
+      var z = leapHand.pitch();
       
-      var newEuler = new THREE.Euler( x , y , z , 'XYZ') 
+      var newEuler = new THREE.Euler( x , z , y , 'XYZ') 
       var newQuat = new THREE.Quaternion().setFromEuler( newEuler );
      
       handMesh.quaternion.multiply(newQuat);
-
+      */
 
       //TODO:
       //apply to thumb as well. 
@@ -183,33 +239,40 @@
         var tip = leapToScene( frame , f.tipPosition );
 
         var lh = leapHand;
+        var d = lh.palmPosition;
 
-        handDir = new THREE.Vector3( lh[0] , lh[1] , lh[2] ).normalize();
+        handDir = new THREE.Vector3( d[0] , d[1] , d[2] ).normalize();
 
         mcpToPip = new THREE.Vector3().subVectors( pip , mcp ).normalize();
         pipToDip = new THREE.Vector3().subVectors( dip , pip ).normalize();
         dipToTip = new THREE.Vector3().subVectors( pip , tip ).normalize();
 
 
-        var mcpBone       = findBone( handMesh , i , 0 );
-        mcpFromTo         = quaternionFromTo( handDir , mcpToPip );
-        mcpBone.rotation  = mcpFromTo.multiply( handMesh.quaternion );
+        var mcpBone         = findBone( handMesh , i , 0 );
+        mcpFromTo           = quaternionFromTo( handDir , mcpToPip );
+        mcpBone.quaternion  = mcpFromTo.multiply( handMesh.quaternion );
+
+       // console.log( mcpBone.quaternion );
+
+        mcpBone.rotation.setFromQuaternion( mcpBone.quaternion , 'XYZ' );
+        //console.log( mcpBone.rotation );
        
-        var pipBone       = findBone( handMesh , i , 1 );
-        pipFromTo         = quaternionFromTo( mcpToPip , pipToDip );
-        pipBone.rotation  = pipFromTo.multiply( mcpBone.rotation );
+        var pipBone         = findBone( handMesh , i , 1 );
+        pipFromTo           = quaternionFromTo( mcpToPip , pipToDip );
 
-        var dipBone       = findBone( handMesh , i , 2 );
-        dipFromTo         = quaternionFromTo( pipToDip , dipToTip );
-        dipBone.rotation  = pipFromTo.multiply( pipBone.rotation );
+        pipBone.quaternion  = pipFromTo.multiply( mcpBone.rotation._quaternion );
 
+        //console.log( pipBone.quaternion );
+        pipBone.rotation.setFromQuaternion( pipBone.quaternion , 'XYZ' );
 
-
-        //console.log( tip );
+        var dipBone         = findBone( handMesh , i , 2 );
+        dipFromTo           = quaternionFromTo( pipToDip , dipToTip );
+        dipBone.quaternion  = dipFromTo.multiply( pipBone.rotation._quaternion );
+        dipBone.rotation.setFromQuaternion( dipBone.quaternion , 'XYZ' );
         
-
-
       }
+
+      handMesh.geometry.verticesNeedsUpdate = true;
     
     }
       
