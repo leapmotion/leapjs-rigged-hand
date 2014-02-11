@@ -59,18 +59,56 @@ scene.add(sphere)
 animation = undefined
 handMesh = undefined
 
-(new THREE.JSONLoader).load 'javascripts/blender-export-from-collada-from-maya.json',  (geometry) ->
-  (new THREE.SceneLoader).load 'javascripts/right-hand-via-fbx-py-converter.json',  (object) ->
-    geometry.faces = object.geometries.Geometry_64_g0_01.faces
-    geometry.vertices = object.geometries.Geometry_64_g0_01.vertices
-    console.log 'loaded', geometry
-  #    geometry = object.geometries.Geometry_64_g0_01
+
+
+#(new THREE.JSONLoader).load 'javascripts/blender-export-from-collada-from-maya.json',  (geometryWithBones) ->
+#(new THREE.SceneLoader).load 'javascripts/right-hand-via-fbx-py-converter.json',  (object) ->
+# JSONLoader expects vertices
+# ObjectLoader seems to load empty objects for materials and geometries, tries to act on json.object rather than json.objects
+(new THREE.SceneLoader).load 'javascripts/right-hand-via-fbx-py-converter.json',  (object) ->
+#    geometry.faces = object.geometries.Geometry_64_g0_01.faces
+#    geometry.vertices = object.geometries.Geometry_64_g0_01.vertices
+#    console.log 'loaded', geometry
+    geometry = object.geometries.Geometry_64_g0_01
+#    geometry.bones = object.bones
+
+    # it appears that all the bones belong to a geometry in a flat structure, but have links to set nesting.
+    # it looks like the parent must be added to the array before the child.
+    geometry.bones = []
+
+    # currently puts all bones in a line. :-/ this should be enought to test some motion.
+    updateBoneAttrs = (boneAttrs, parent)->
+      console.log "udpate attrs (inner)", boneAttrs.name
+      boneAttrs.pos = [boneAttrs.position.x, boneAttrs.position.y, boneAttrs.position.z]
+      q = (new THREE.Quaternion).setFromEuler(new THREE.Euler(boneAttrs.rotation[0], boneAttrs.rotation[1], boneAttrs.rotation[2], 'XYZ'))
+      boneAttrs.rotq = [q._x, q._y, q._z, q._w]
+      boneAttrs.scl = [boneAttrs.scale.x, boneAttrs.scale.y, boneAttrs.scale.z]
+      boneAttrs.parent = parent
+
+      geometry.bones.push boneAttrs
+      myIndex = geometry.bones.length - 1
+      for childBoneAttrs in boneAttrs.children
+        updateBoneAttrs(childBoneAttrs, myIndex)
+
+    updateBoneAttrs(object.objects['Bip01 R Hand'], -1)
+
+
+
+
+
+
     THREE.GeometryUtils.center(geometry)
-#    debugger
 #    object.materials.phong1.skinning = true
     handMesh = new THREE.SkinnedMesh( geometry, object.materials.phong1)
     handMesh.useVertexTexture = false
     handMesh.scale = new THREE.Vector3(0.01,0.01,0.01)
+
+    someBone = handMesh.children[0].children[0].children[0]
+    someBone.position.multiply(new THREE.Vector3(20,20,20))
+    handMesh.children[0].update(handMesh.matrix, true)
+    handMesh.children[0].children[0].children[0].rotation
+
+#    handMesh.material.skinning = true
 
     # First we apply a base transform, to make the hand oriented how we want it:
     baseQuaternion = (new THREE.Quaternion).setFromEuler(new THREE.Euler(-Math.PI / 2, 0, -Math.PI / 2 , 'XYZ'))

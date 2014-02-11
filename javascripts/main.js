@@ -68,29 +68,49 @@
 
   handMesh = void 0;
 
-  (new THREE.JSONLoader).load('javascripts/blender-export-from-collada-from-maya.json', function(geometry) {
-    return (new THREE.SceneLoader).load('javascripts/right-hand-via-fbx-py-converter.json', function(object) {
-      var baseQuaternion;
-      geometry.faces = object.geometries.Geometry_64_g0_01.faces;
-      geometry.vertices = object.geometries.Geometry_64_g0_01.vertices;
-      console.log('loaded', geometry);
-      THREE.GeometryUtils.center(geometry);
-      handMesh = new THREE.SkinnedMesh(geometry, object.materials.phong1);
-      handMesh.useVertexTexture = false;
-      handMesh.scale = new THREE.Vector3(0.01, 0.01, 0.01);
-      baseQuaternion = (new THREE.Quaternion).setFromEuler(new THREE.Euler(-Math.PI / 2, 0, -Math.PI / 2, 'XYZ'));
-      handMesh.quaternion = baseQuaternion;
-      scene.add(handMesh);
-      return Leap.loop(function(frame) {
-        var leapHand;
-        if (leapHand = frame.hands[0]) {
-          handMesh.position.x = leapHand.stabilizedPalmPosition[0] / 10;
-          handMesh.position.y = leapHand.stabilizedPalmPosition[1] / 10;
-          handMesh.position.z = leapHand.stabilizedPalmPosition[2] / 10;
-          handMesh.quaternion = baseQuaternion.clone().multiply((new THREE.Quaternion).setFromEuler(new THREE.Euler(leapHand.roll(), leapHand.direction[1], -leapHand.direction[0], 'XYZ')));
-        }
-        return renderer.render(scene, camera);
-      });
+  (new THREE.SceneLoader).load('javascripts/right-hand-via-fbx-py-converter.json', function(object) {
+    var baseQuaternion, geometry, someBone, updateBoneAttrs;
+    geometry = object.geometries.Geometry_64_g0_01;
+    geometry.bones = [];
+    updateBoneAttrs = function(boneAttrs, parent) {
+      var childBoneAttrs, myIndex, q, _i, _len, _ref, _results;
+      console.log("udpate attrs (inner)", boneAttrs.name);
+      boneAttrs.pos = [boneAttrs.position.x, boneAttrs.position.y, boneAttrs.position.z];
+      q = (new THREE.Quaternion).setFromEuler(new THREE.Euler(boneAttrs.rotation[0], boneAttrs.rotation[1], boneAttrs.rotation[2], 'XYZ'));
+      boneAttrs.rotq = [q._x, q._y, q._z, q._w];
+      boneAttrs.scl = [boneAttrs.scale.x, boneAttrs.scale.y, boneAttrs.scale.z];
+      boneAttrs.parent = parent;
+      geometry.bones.push(boneAttrs);
+      myIndex = geometry.bones.length - 1;
+      _ref = boneAttrs.children;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        childBoneAttrs = _ref[_i];
+        _results.push(updateBoneAttrs(childBoneAttrs, myIndex));
+      }
+      return _results;
+    };
+    updateBoneAttrs(object.objects['Bip01 R Hand'], -1);
+    THREE.GeometryUtils.center(geometry);
+    handMesh = new THREE.SkinnedMesh(geometry, object.materials.phong1);
+    handMesh.useVertexTexture = false;
+    handMesh.scale = new THREE.Vector3(0.01, 0.01, 0.01);
+    someBone = handMesh.children[0].children[0].children[0];
+    someBone.position.multiply(new THREE.Vector3(20, 20, 20));
+    handMesh.children[0].update(handMesh.matrix, true);
+    handMesh.children[0].children[0].children[0].rotation;
+    baseQuaternion = (new THREE.Quaternion).setFromEuler(new THREE.Euler(-Math.PI / 2, 0, -Math.PI / 2, 'XYZ'));
+    handMesh.quaternion = baseQuaternion;
+    scene.add(handMesh);
+    return Leap.loop(function(frame) {
+      var leapHand;
+      if (leapHand = frame.hands[0]) {
+        handMesh.position.x = leapHand.stabilizedPalmPosition[0] / 10;
+        handMesh.position.y = leapHand.stabilizedPalmPosition[1] / 10;
+        handMesh.position.z = leapHand.stabilizedPalmPosition[2] / 10;
+        handMesh.quaternion = baseQuaternion.clone().multiply((new THREE.Quaternion).setFromEuler(new THREE.Euler(leapHand.roll(), leapHand.direction[1], -leapHand.direction[0], 'XYZ')));
+      }
+      return renderer.render(scene, camera);
     });
   });
 
