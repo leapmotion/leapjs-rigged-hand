@@ -244,7 +244,7 @@
 	"materials" :
 	{
 		"phong1": {
-			"type"    : "MeshLambertMaterial",
+			"type"    : "MeshBasicMaterial",
 			"parameters"  : {
 				"color"  : 12566463,
 				"ambient"  : 0,
@@ -253,7 +253,8 @@
 				"transparent" : false,
 				"opacity" : 1.0,
 				"wireframe" : false,
-				"wireframeLinewidth" : 1
+				"wireframeLinewidth" : 1,
+        "vertexColors" : false
 			}
 		}
 	},
