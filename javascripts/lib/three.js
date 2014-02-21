@@ -14785,7 +14785,6 @@ THREE.SkinnedMesh = function ( geometry, material, useVertexTexture ) {
 THREE.SkinnedMesh.prototype = Object.create( THREE.Mesh.prototype );
 
 THREE.SkinnedMesh.prototype.addBone = function( bone ) {
-  console.log('add bone');
 
 	if ( bone === undefined ) {
 
