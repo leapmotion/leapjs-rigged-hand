@@ -34,6 +34,7 @@ THREE.Bone.prototype.positionFromWorld = ->
   localAxisLevel = (new THREE.Vector3(1,0,0))
   worldAxisLevel = (new THREE.Vector3).crossVectors(@parent.worldUp, @parent.worldDirection).normalize()
   @worldAxis.crossVectors(@parent.worldDirection, @worldDirection).normalize()
+  @worldAxisReverse.crossVectors(@worldDirection, @parent.worldDirection).normalize()
 
 #  angle = 10 * TO_RAD
 #  worldAxis = new THREE.Vector3(0,1,0)
@@ -45,11 +46,10 @@ THREE.Bone.prototype.positionFromWorld = ->
   # k = rotation axis = worldAxis
   @worldUp ||= new THREE.Vector3
   @worldUp.set(0,0,0)
-    .add(@parent.worldUp.multiplyScalar(directionDotParentDirection))
+    .add(@parent.worldUp.clone().multiplyScalar(directionDotParentDirection))
     .add((new THREE.Vector3).crossVectors(@worldAxis, @parent.worldUp).multiplyScalar(Math.sin(angle)))
     .add(@worldAxis.clone().multiplyScalar(@worldAxis.dot(@parent.worldUp) * (1 - directionDotParentDirection)))
     .normalize()
-  @worldAxis
 
 #  # now we test
 #  testAngle = Math.acos(@worldUp.dot(parentUp))
@@ -167,12 +167,59 @@ animation = undefined
 handMesh = undefined
 
 
-(new THREE.JSONLoader).load 'javascripts/right-hand.json', (geometryWithBones, materials) ->
-#(new THREE.JSONLoader).load 'javascripts/14right.json', (geometryWithBones, materials) -> # have to manually set scale to 0.01 for this one
+
+`
+
+ function  createRig( whichMesh , mesh ){
+
+
+     for( var i = 0; i < whichMesh.bones.length; i++ ){
+
+       var bone = whichMesh.bones[i];
+
+       if( bone.parent == whichMesh ){
+
+         createBone( bone , whichMesh, mesh );
+
+       }
+
+     }
+
+   }
+
+   function createBone( bone , parent , mesh ){
+
+     console.log( bone );
+
+     var m = mesh.clone();
+     parent.add( m );
+     m.position = bone.position;
+     m.rotation = bone.rotation;
+     m.quaternion = bone.quaternion;
+
+     for( var i = 0 ; i < bone.children.length; i ++ ){
+
+       var childBone = bone.children[i];
+       createBone( childBone , m , mesh );
+
+
+     }
+
+   }
+
+`
+
+
+#(new THREE.JSONLoader).load 'javascripts/right-hand.json', (geometryWithBones, materials) ->
+(new THREE.JSONLoader).load 'javascripts/14right.json', (geometryWithBones, materials) -> # have to manually set scale to 0.01 for this one
 # JSONLoader expects vertices
 # ObjectLoader seems to load empty objects for materials and geometries, tries to act on json.object rather than json.objects
   material = materials[0]
   material.skinning = true
+
+  for bone in geometryWithBones.bones
+    for pos, i in bone.pos
+      bone.pos[i]  *= 100
 
   THREE.GeometryUtils.center(geometryWithBones)
   handMesh = new THREE.SkinnedMesh(
@@ -180,6 +227,15 @@ handMesh = undefined
   )
   handMesh.castShadow = true
   handMesh.receiveShadow = true
+
+  `
+  var geo = new THREE.IcosahedronGeometry( .5 , 1 );
+  var mat = new THREE.MeshNormalMaterial();
+  var mesh = new THREE.Mesh( geo , mat );
+
+  createRig( handMesh , mesh );
+  `
+
   scene.add handMesh
 
   window.forearm = handMesh.children[0]
@@ -190,7 +246,7 @@ handMesh = undefined
   window.ringFinger = palm.children[4]
   window.pinky = palm.children[3]
   # the bones are out of order in the model, so sort
-  palm.children = [thumb, indexFinger, middleFinder, ringFinger, pinky]
+#  palm.children = [thumb, indexFinger, middleFinder, ringFinger, pinky]
   forearm.matrixAutoUpdate = false
 
   palm.worldUp         = (new THREE.Vector3).visualize(scene, 0xff0000)
@@ -211,6 +267,10 @@ handMesh = undefined
     rigFinger.worldAxis = (new THREE.Vector3).visualize(scene, 0x00ff00)
     rigFinger.children[0].worldAxis = new THREE.Vector3
     rigFinger.children[0].children[0].worldAxis = new THREE.Vector3
+
+    rigFinger.worldAxisReverse = (new THREE.Vector3).visualize(scene, 0x00ff00)
+    rigFinger.children[0].worldAxisReverse = new THREE.Vector3
+    rigFinger.children[0].children[0].worldAxisReverse = new THREE.Vector3
 
   indexFinger.worldUp.visualize(scene, 0x770000)
   indexFinger.worldDirection.visualize(scene, 0x777700)
@@ -239,16 +299,17 @@ handMesh = undefined
       # matrixAutoUpdate must be false, in order for `updateMatrixWorld(force = true)` to be effective
   #      leapHand.palmNormal[2] *= -1
   #      leapHand.direction[2]  *= -1
-#      palm.matrix.lookAt(palm.worldDirection, zeroVector, palm.worldUp)
-#      palm.matrix.decompose(palm.position, palm.quaternion, palm.scale)
-#      palm.updateMatrixWorld(true)
+      palm.matrix.lookAt(palm.worldDirection, zeroVector, palm.worldUp)
+      palm.matrix.decompose(palm.position, palm.quaternion, palm.scale)
+      palm.updateMatrixWorld(true)
 
-      palm.worldDirection.fromArray(leapHand.direction).visualize()
-      palm.worldUp.fromArray(leapHand.palmNormal).multiplyScalar(-1)#.visualize()
+      palm.worldDirection.fromArray(leapHand.direction)
+      palm.worldUp.fromArray(leapHand.palmNormal).multiplyScalar(-1)
   
       for leapFinger, i in leapHand.fingers
-        # wrist -> mcp -> pip -> dip
-        
+#        if i == 1
+          # wrist -> mcp -> pip -> dip -> tip
+
         palm.children[i].worldDirection.subVectors(leapFinger.pipPosition, leapFinger.mcpPosition).normalize()
         palm.children[i].children[0].worldDirection.subVectors(leapFinger.dipPosition, leapFinger.pipPosition).normalize()
         palm.children[i].children[0].children[0].worldDirection.subVectors(leapFinger.tipPosition, leapFinger.dipPosition).normalize()
@@ -262,7 +323,6 @@ handMesh = undefined
       palm.worldDirection.visualize()
       indexFinger.worldUp.visualize()
       indexFinger.worldDirection.visualize()
-
 
 #      if j == 0
       j++
