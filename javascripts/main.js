@@ -12,11 +12,22 @@
     return this.setFromVectors((new THREE.Vector3).subVectors(a, b).normalize(), (new THREE.Vector3).subVectors(c, b).normalize());
   };
 
-  THREE.Quaternion.prototype.setFromVectors = function(childDirection, parentDirection, parentUp) {
-    var angle, axis;
-    angle = Math.acos(childDirection.dot(parentDirection));
-    axis = (new THREE.Vector3(1, 0, 0)).add((new THREE.Vector3).crossVectors(parentUp, parentDirection).normalize()).sub((new THREE.Vector3).crossVectors(childDirection, parentDirection).normalize()).normalize();
-    this.setFromAxisAngle(axis, angle);
+  THREE.Vector3.prototype.quick = function() {
+    return [this.x.toPrecision(2), this.y.toPrecision(2), this.z.toPrecision(2)];
+  };
+
+  THREE.Bone.prototype.positionFromWorld = function() {
+    var angle, directionDotParentDirection, localAxis, localAxisLevel, worldAxisLevel;
+    directionDotParentDirection = this.worldDirection.dot(this.parent.worldDirection);
+    angle = Math.acos(directionDotParentDirection);
+    localAxisLevel = new THREE.Vector3(1, 0, 0);
+    worldAxisLevel = (new THREE.Vector3).crossVectors(this.parent.worldUp, this.parent.worldDirection).normalize();
+    this.worldAxis.crossVectors(this.parent.worldDirection, this.worldDirection).normalize();
+    this.worldUp || (this.worldUp = new THREE.Vector3);
+    this.worldUp.set(0, 0, 0).add(this.parent.worldUp.multiplyScalar(directionDotParentDirection)).add((new THREE.Vector3).crossVectors(this.worldAxis, this.parent.worldUp).multiplyScalar(Math.sin(angle))).add(this.worldAxis.clone().multiplyScalar(this.worldAxis.dot(this.parent.worldUp) * (1 - directionDotParentDirection))).normalize();
+    this.worldAxis;
+    localAxis = localAxisLevel.add(worldAxisLevel).sub(this.worldAxis).normalize();
+    this.quaternion.setFromAxisAngle(localAxis, angle);
     return this;
   };
 
@@ -77,7 +88,7 @@
 
   camera = new THREE.PerspectiveCamera(90, WIDTH / HEIGHT, 1, 1000);
 
-  camera.position.set(-8, 6, -16);
+  camera.position.set(0, 3, 15);
 
   camera.lookAt(new THREE.Vector3(0, 0, 0));
 
@@ -88,7 +99,7 @@
   handMesh = void 0;
 
   (new THREE.JSONLoader).load('javascripts/right-hand.json', function(geometryWithBones, materials) {
-    var armVector, avg, fingerLengths, firstBoneDirection, firstBoneNormal, j, lengthVals, material, num, palmDirection, palmNormal, palmNormalUp, secondBoneDirection, secondBoneNormal, thirdBoneDirection, thirdBoneNormal, _i, _len;
+    var armVector, j, material, rigFinger, _i, _len, _ref;
     material = materials[0];
     material.skinning = true;
     THREE.GeometryUtils.center(geometryWithBones);
@@ -98,67 +109,56 @@
     scene.add(handMesh);
     window.forearm = handMesh.children[0];
     window.palm = handMesh.children[0].children[0].children[0];
-    window.rigFingers = palm.children;
-    window.thumb = rigFingers[0];
-    window.indexFinger = rigFingers[1];
-    window.middleFinder = rigFingers[2];
-    window.pinky = rigFingers[3];
-    window.ringFinger = rigFingers[4];
+    window.thumb = palm.children[0];
+    window.indexFinger = palm.children[1];
+    window.middleFinder = palm.children[2];
+    window.ringFinger = palm.children[4];
+    window.pinky = palm.children[3];
+    palm.children = [thumb, indexFinger, middleFinder, ringFinger, pinky];
     forearm.matrixAutoUpdate = false;
-    palmNormalUp = new THREE.Vector3;
-    palmNormal = (new THREE.Vector3).visualize(scene, 0x008899);
-    palmDirection = new THREE.Vector3;
-    armVector = (new THREE.Vector3(1, 0, 2)).normalize().visualize(scene, 0x3333ff);
+    palm.worldUp = (new THREE.Vector3).visualize(scene, 0xff0000);
+    palm.worldDirection = (new THREE.Vector3).visualize(scene, 0xffff00);
+    armVector = (new THREE.Vector3(1, 0, 2)).normalize();
     armVector.multiplyScalar(10);
-    palmDirection = (new THREE.Vector3).visualize(scene);
-    firstBoneDirection = (new THREE.Vector3).visualize(scene, 0xff0000);
-    secondBoneDirection = (new THREE.Vector3).visualize(scene, 0xff9944);
-    thirdBoneDirection = (new THREE.Vector3).visualize(scene);
-    firstBoneNormal = (new THREE.Vector3).visualize(scene, 0x00aa44);
-    secondBoneNormal = (new THREE.Vector3).visualize(scene, 0x009966);
-    thirdBoneNormal = (new THREE.Vector3).visualize(scene, 0x009988);
-    firstBoneNormal.set(0, 1, 0);
-    secondBoneNormal.set(0, 1, 0);
-    thirdBoneNormal.set(0, 1, 0);
-    indexFinger.localToWorld(firstBoneNormal).normalize().visualize();
-    renderer.render(scene, camera);
-    lengthVals = [];
-    fingerLengths = [66.045, 63.635, 50.07, 63.65, 70.206, 67.6442, 71.8168, 72.3318, 72.6944, 72.9638, 73.1665, 73.312, 73.4207, 73.4988, 73.5561, 73.5991, 73.6301, 73.653, 73.6699, 73.6823, 73.6914, 73.698, 73.7029, 73.7065, 73.7091, 73.711, 73.7124, 73.7135, 73.7142, 73.7148, 73.7152, 73.7155, 73.7157, 73.7159, 73.716, 73.7161, 73.7162, 71.0263, 71.0264, 73.7163, 55.8858, 71.0431, 71.5765, 68.9647, 54.2636, 68.9809];
-    avg = 0;
-    for (_i = 0, _len = fingerLengths.length; _i < _len; _i++) {
-      num = fingerLengths[_i];
-      avg += num;
+    _ref = palm.children;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      rigFinger = _ref[_i];
+      rigFinger.worldDirection = new THREE.Vector3;
+      rigFinger.children[0].worldDirection = new THREE.Vector3;
+      rigFinger.children[0].children[0].worldDirection = new THREE.Vector3;
+      rigFinger.worldUp = new THREE.Vector3;
+      rigFinger.children[0].worldUp = new THREE.Vector3;
+      rigFinger.children[0].children[0].worldUp = new THREE.Vector3;
+      rigFinger.worldAxis = (new THREE.Vector3).visualize(scene, 0x00ff00);
+      rigFinger.children[0].worldAxis = new THREE.Vector3;
+      rigFinger.children[0].children[0].worldAxis = new THREE.Vector3;
     }
-    console.log(avg / fingerLengths.length);
+    indexFinger.worldUp.visualize(scene, 0x770000);
+    indexFinger.worldDirection.visualize(scene, 0x777700);
+    indexFinger.worldAxis.visualize(scene, 0x00ff00);
+    renderer.render(scene, camera);
     j = 0;
     return Leap.loop(function(frame) {
-      var i, leapFinger, leapHand;
+      var i, leapFinger, leapHand, _j, _len1, _ref1;
       if (leapHand = frame.hands[0]) {
         redDot.position.fromArray(leapHand.stabilizedPalmPosition).divideScalar(20);
         yellowDot.position.copy(redDot.position).add((new THREE.Vector3()).fromArray(leapHand.direction).multiplyScalar(-1.5));
-        armVector.visualizeFrom(yellowDot.position);
-        i = 1;
-        leapFinger = leapHand.fingers[i];
-        palmNormalUp.fromArray(leapHand.palmNormal).multiplyScalar(-1);
-        palmNormal.fromArray(leapHand.palmNormal);
-        palmDirection.fromArray(leapHand.direction);
-        palm.matrix.lookAt(palmDirection, zeroVector, palmNormalUp);
-        palm.matrix.decompose(palm.position, palm.quaternion, palm.scale);
-        palm.updateMatrixWorld(true);
-        firstBoneDirection.subVectors(leapFinger.pipPosition, leapFinger.mcpPosition).normalize();
-        secondBoneDirection.subVectors(leapFinger.dipPosition, leapFinger.pipPosition).normalize();
-        thirdBoneDirection.subVectors(leapFinger.tipPosition, leapFinger.dipPosition).normalize();
-        firstBoneNormal.set(1, 0, 0);
-        secondBoneNormal.set(0, 1, 0);
-        thirdBoneNormal.set(0, 1, 0);
-        rigFingers[i].quaternion.setFromVectors(firstBoneDirection, palmDirection, palmNormal);
-        rigFingers[i].children[0].quaternion.setFromVectors(secondBoneDirection, firstBoneDirection, palmNormal);
-        rigFingers[i].children[0].children[0].quaternion.setFromVectors(thirdBoneDirection, secondBoneDirection, palmNormal);
-        if (j === 0) {
-          if (Math.abs(rigFingers[i].quaternion._euler._z) > 10 * TO_RAD) {
-            console.log(rigFingers[i].quaternion._euler._z);
-          }
+        palm.worldDirection.fromArray(leapHand.direction).visualize();
+        palm.worldUp.fromArray(leapHand.palmNormal).multiplyScalar(-1);
+        _ref1 = leapHand.fingers;
+        for (i = _j = 0, _len1 = _ref1.length; _j < _len1; i = ++_j) {
+          leapFinger = _ref1[i];
+          palm.children[i].worldDirection.subVectors(leapFinger.pipPosition, leapFinger.mcpPosition).normalize();
+          palm.children[i].children[0].worldDirection.subVectors(leapFinger.dipPosition, leapFinger.pipPosition).normalize();
+          palm.children[i].children[0].children[0].worldDirection.subVectors(leapFinger.tipPosition, leapFinger.dipPosition).normalize();
+          palm.children[i].positionFromWorld();
+          palm.children[i].children[0].positionFromWorld();
+          palm.children[i].children[0].children[0].positionFromWorld();
         }
+        palm.worldUp.visualize();
+        palm.worldDirection.visualize();
+        indexFinger.worldUp.visualize();
+        indexFinger.worldDirection.visualize();
         j++;
         j = j % 60;
         return renderer.render(scene, camera);
