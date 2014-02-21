@@ -168,29 +168,16 @@ handMesh = undefined
 
 
 
-`
-
- function  createRig( whichMesh , mesh ){
-
-
+`function  visualizeBones( whichMesh , mesh ){
      for( var i = 0; i < whichMesh.bones.length; i++ ){
-
        var bone = whichMesh.bones[i];
-
        if( bone.parent == whichMesh ){
-
-         createBone( bone , whichMesh, mesh );
-
+         visualizeBone( bone , whichMesh, mesh );
        }
-
      }
-
    }
 
-   function createBone( bone , parent , mesh ){
-
-     console.log( bone );
-
+   function visualizeBone( bone , parent , mesh ){
      var m = mesh.clone();
      parent.add( m );
      m.position = bone.position;
@@ -198,16 +185,10 @@ handMesh = undefined
      m.quaternion = bone.quaternion;
 
      for( var i = 0 ; i < bone.children.length; i ++ ){
-
        var childBone = bone.children[i];
-       createBone( childBone , m , mesh );
-
-
+       visualizeBone( childBone , m , mesh );
      }
-
-   }
-
-`
+   }`
 
 
 #(new THREE.JSONLoader).load 'javascripts/right-hand.json', (geometryWithBones, materials) ->
@@ -228,13 +209,13 @@ handMesh = undefined
   handMesh.castShadow = true
   handMesh.receiveShadow = true
 
-  `
-  var geo = new THREE.IcosahedronGeometry( .5 , 1 );
-  var mat = new THREE.MeshNormalMaterial();
-  var mesh = new THREE.Mesh( geo , mat );
-
-  createRig( handMesh , mesh );
-  `
+  visualizeBones(
+    handMesh ,
+    new THREE.Mesh(
+      new THREE.IcosahedronGeometry( .5 , 1 ) ,
+      new THREE.MeshNormalMaterial()
+    )
+  )
 
   scene.add handMesh
 
@@ -246,7 +227,7 @@ handMesh = undefined
   window.ringFinger = palm.children[4]
   window.pinky = palm.children[3]
   # the bones are out of order in the model, so sort
-#  palm.children = [thumb, indexFinger, middleFinder, ringFinger, pinky]
+  palm.children = [thumb, indexFinger, middleFinder, ringFinger, pinky]
   forearm.matrixAutoUpdate = false
 
   palm.worldUp         = (new THREE.Vector3).visualize(scene, 0xff0000)
@@ -299,9 +280,9 @@ handMesh = undefined
       # matrixAutoUpdate must be false, in order for `updateMatrixWorld(force = true)` to be effective
   #      leapHand.palmNormal[2] *= -1
   #      leapHand.direction[2]  *= -1
-      palm.matrix.lookAt(palm.worldDirection, zeroVector, palm.worldUp)
-      palm.matrix.decompose(palm.position, palm.quaternion, palm.scale)
-      palm.updateMatrixWorld(true)
+#      palm.matrix.lookAt(palm.worldDirection, zeroVector, palm.worldUp)
+#      palm.matrix.decompose(palm.position, palm.quaternion, palm.scale)
+#      palm.updateMatrixWorld(true)
 
       palm.worldDirection.fromArray(leapHand.direction)
       palm.worldUp.fromArray(leapHand.palmNormal).multiplyScalar(-1)
