@@ -144,8 +144,8 @@
     window.thumb = palm.children[0];
     window.indexFinger = palm.children[1];
     window.middleFinder = palm.children[2];
-    window.ringFinger = palm.children[4];
-    window.pinky = palm.children[3];
+    window.ringFinger = palm.children[3];
+    window.pinky = palm.children[4];
     palm.children = [thumb, indexFinger, middleFinder, ringFinger, pinky];
     forearm.matrixAutoUpdate = false;
     palm.worldUp = (new THREE.Vector3).visualize(scene, 0xff0000);

@@ -198,6 +198,7 @@ handMesh = undefined
   material = materials[0]
   material.skinning = true
 
+  # fix bone positioning when using 14right.json
   for bone in geometryWithBones.bones
     for pos, i in bone.pos
       bone.pos[i]  *= 100
@@ -224,8 +225,8 @@ handMesh = undefined
   window.thumb = palm.children[0]
   window.indexFinger = palm.children[1]
   window.middleFinder = palm.children[2]
-  window.ringFinger = palm.children[4]
-  window.pinky = palm.children[3]
+  window.ringFinger = palm.children[3] # switch ring and finger when using 14right.json
+  window.pinky = palm.children[4]
   # the bones are out of order in the model, so sort
   palm.children = [thumb, indexFinger, middleFinder, ringFinger, pinky]
   forearm.matrixAutoUpdate = false
