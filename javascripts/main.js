@@ -21,12 +21,11 @@
     directionDotParentDirection = this.worldDirection.dot(this.parent.worldDirection);
     angle = Math.acos(directionDotParentDirection);
     localAxisLevel = new THREE.Vector3(1, 0, 0);
-    worldAxisLevel = (new THREE.Vector3).crossVectors(this.parent.worldUp, this.parent.worldDirection).normalize();
+    worldAxisLevel = (new THREE.Vector3).crossVectors(this.parent.worldDirection, this.parent.worldUp).normalize();
     this.worldAxis.crossVectors(this.parent.worldDirection, this.worldDirection).normalize();
-    this.worldAxisReverse.crossVectors(this.worldDirection, this.parent.worldDirection).normalize();
     this.worldUp || (this.worldUp = new THREE.Vector3);
     this.worldUp.set(0, 0, 0).add(this.parent.worldUp.clone().multiplyScalar(directionDotParentDirection)).add((new THREE.Vector3).crossVectors(this.worldAxis, this.parent.worldUp).multiplyScalar(Math.sin(angle))).add(this.worldAxis.clone().multiplyScalar(this.worldAxis.dot(this.parent.worldUp) * (1 - directionDotParentDirection))).normalize();
-    localAxis = localAxisLevel.add(worldAxisLevel).sub(this.worldAxis).normalize();
+    localAxis = localAxisLevel.add(worldAxisLevel).sub(this.worldAxisReverse).normalize();
     this.quaternion.setFromAxisAngle(localAxis, angle);
     return this;
   };

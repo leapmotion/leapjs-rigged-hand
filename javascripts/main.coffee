@@ -32,9 +32,8 @@ THREE.Bone.prototype.positionFromWorld = ->
   angle = Math.acos directionDotParentDirection
 
   localAxisLevel = (new THREE.Vector3(1,0,0))
-  worldAxisLevel = (new THREE.Vector3).crossVectors(@parent.worldUp, @parent.worldDirection).normalize()
+  worldAxisLevel = (new THREE.Vector3).crossVectors(@parent.worldDirection, @parent.worldUp).normalize()
   @worldAxis.crossVectors(@parent.worldDirection, @worldDirection).normalize()
-  @worldAxisReverse.crossVectors(@worldDirection, @parent.worldDirection).normalize()
 
 #  angle = 10 * TO_RAD
 #  worldAxis = new THREE.Vector3(0,1,0)
@@ -63,18 +62,11 @@ THREE.Bone.prototype.positionFromWorld = ->
   localAxis =
     localAxisLevel
     .add(worldAxisLevel)
-    .sub(@worldAxis)
+    .sub(@worldAxisReverse)
     .normalize()
 
   @quaternion.setFromAxisAngle(localAxis, angle)
   @
-
-#
-#  angle = Math.acos(firstBoneDirection.dot(palmDirection))
-#  axis.crossVectors(firstBoneDirection, palmDirection).normalize()#.visualize() # normalize here appears unnecessary?
-#  normalAxis.crossVectors(palmNormal, palmDirection).normalize()#.visualize()
-#  axis.sub(normalAxis)
-#  rigFingers[i].quaternion.setFromAxisAngle(new THREE.Vector3(1,0,0).sub(axis).normalize(), angle)
 
 # for some reason, we can't store custom properties on the Vector3
 # we return an arrow and expect it to be passed back
@@ -279,8 +271,6 @@ handMesh = undefined
       # so we hack in for now and set an eye of our direction and a target of 0,0,0
       # bone.update calls bone.updateMatrix calls matrix.compose(this.position, this.quaternion, this.scale)
       # matrixAutoUpdate must be false, in order for `updateMatrixWorld(force = true)` to be effective
-  #      leapHand.palmNormal[2] *= -1
-  #      leapHand.direction[2]  *= -1
 #      palm.matrix.lookAt(palm.worldDirection, zeroVector, palm.worldUp)
 #      palm.matrix.decompose(palm.position, palm.quaternion, palm.scale)
 #      palm.updateMatrixWorld(true)
@@ -289,8 +279,7 @@ handMesh = undefined
       palm.worldUp.fromArray(leapHand.palmNormal).multiplyScalar(-1)
   
       for leapFinger, i in leapHand.fingers
-#        if i == 1
-          # wrist -> mcp -> pip -> dip -> tip
+        # wrist -> mcp -> pip -> dip -> tip
 
         palm.children[i].worldDirection.subVectors(leapFinger.pipPosition, leapFinger.mcpPosition).normalize()
         palm.children[i].children[0].worldDirection.subVectors(leapFinger.dipPosition, leapFinger.pipPosition).normalize()
