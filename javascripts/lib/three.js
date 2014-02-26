@@ -10995,7 +10995,7 @@ THREE.JSONLoader.prototype.parse = function ( json, texturePath ) {
 
 	parseModel( scale );
 
-	parseSkin();
+	parseSkin( scale );
 	parseMorphing( scale );
 
 	geometry.computeCentroids();
@@ -11302,9 +11302,9 @@ THREE.JSONLoader.prototype.parse = function ( json, texturePath ) {
 
 	};
 
-	function parseSkin() {
+	function parseSkin(scale) {
 
-		var i, l, x, y, z, w, a, b, c, d;
+		var i, j, l, x, y, z, w, a, b, c, d;
 
 		if ( json.skinWeights ) {
 
@@ -11350,6 +11350,12 @@ THREE.JSONLoader.prototype.parse = function ( json, texturePath ) {
 				console.warn('When skinning, number of vertices (' + geometry.vertices.length + '), skinIndices (' +
 					geometry.skinIndices.length + '), and skinWeights (' + geometry.skinWeights.length + ') should match.');
 		}
+
+    for ( i = 0; i < geometry.bones.length; i++) {
+      for ( j = 0; j < 3; j++) {
+        geometry.bones[i].pos[j] *= scale;
+      }
+    }
 
 		// could change this to json.animations[0] or remove completely
 		geometry.animation = json.animation;
@@ -14662,7 +14668,11 @@ THREE.Bone.prototype.update = function ( parentSkinMatrix, forceUpdate ) {
 
 	for ( i = 0; i < l; i ++ ) {
 
-		this.children[ i ].update( this.skinMatrix, forceUpdate );
+    if ( this.children[ i ] instanceof THREE.Bone ) {
+
+	  	this.children[ i ].update( this.skinMatrix, forceUpdate );
+
+    }
 
 	}
 
@@ -28024,6 +28034,7 @@ THREE.FontUtils.generateShapes = function( text, parameters ) {
 // To use the typeface.js face files, hook up the API
 self._typeface_js = { faces: THREE.FontUtils.faces, loadFace: THREE.FontUtils.loadFace };
 THREE.typeface_js = self._typeface_js;
+
 
 /**
  * @author zz85 / http://www.lab4games.net/zz85/blog
