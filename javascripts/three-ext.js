@@ -6,6 +6,21 @@
 
   window.zeroVector = new THREE.Vector3(0, 0, 0);
 
+  THREE.ArrowHelper.prototype.label = function(text, scale) {
+    if (scale == null) {
+      scale = 1;
+    }
+    text = new THREE.Mesh(new THREE.TextGeometry(text, {
+      size: this.line.scale.y / 20 * scale,
+      height: this.line.scale.y / 100 * scale
+    }), new THREE.MeshBasicMaterial({
+      color: this.line.material.color
+    }));
+    text.rotation = new THREE.Euler(0, 0, 90 * TO_RAD);
+    text.position = vec3(-0.1, 0, 0);
+    return this.add(text);
+  };
+
   THREE.Quaternion.prototype.setFromPoints = function(a, b, c) {
     return this.setFromVectors((new THREE.Vector3).subVectors(a, b).normalize(), (new THREE.Vector3).subVectors(c, b).normalize());
   };
@@ -19,7 +34,7 @@
   };
 
   THREE.Bone.prototype.positionFromWorld = function() {
-    var angle, deltaPos, directionDotParentDirection, localAxis, worldAxisLevel;
+    var angle, deltaPos, directionDotParentDirection, length, localAxis, m, worldAxisLevel;
     directionDotParentDirection = this.worldDirection.dot(this.parent.worldDirection);
     angle = Math.acos(directionDotParentDirection);
     this.localAxisLevel || (this.localAxisLevel = new THREE.Vector3(1, 0, 0));
@@ -29,6 +44,16 @@
     this.worldUp || (this.worldUp = new THREE.Vector3);
     this.worldUp.set(0, 0, 0).add(this.parent.worldUp.clone().multiplyScalar(directionDotParentDirection)).add((new THREE.Vector3).crossVectors(this.worldAxis, this.parent.worldUp).multiplyScalar(Math.sin(angle))).add(this.worldAxis.clone().multiplyScalar(this.worldAxis.dot(this.parent.worldUp) * (1 - directionDotParentDirection))).normalize();
     localAxis = this.localAxisLevel.clone().add(worldAxisLevel).sub(this.worldAxisReverse).normalize();
+    if (!this.axisHelper) {
+      this.axisHelper = new THREE.AxisHelper(2);
+      this.add(this.axisHelper);
+      length = this.children[0].position.length();
+      m = new THREE.Mesh(new THREE.CubeGeometry(.4, .2, length), new THREE.MeshPhongMaterial({
+        color: 0x00ffff,
+        wireframe: true
+      }));
+      this.add(m);
+    }
     if (!this._worldDirectionArrow) {
       this._worldDirectionArrow = new THREE.ArrowHelper(this.worldDirection, zeroVector, 4, 0x99cc33);
       this.add(this._worldDirectionArrow);
@@ -41,11 +66,11 @@
     deltaPos = void 0;
     if (!this._directionArrow) {
       if (this.children[0]) {
-        deltaPos = vec3().subVectors(this.children[0].position, this.position);
-        this._directionArrow = new THREE.ArrowHelper(deltaPos, zeroVector, deltaPos.length() * 100, 0x33ccff);
+        this._directionArrow = new THREE.ArrowHelper(this.children[0].position, zeroVector, this.children[0].position.length(), 0x33ccff);
       }
-      console.log("" + this.name + " position", this.position.quick(), "" + this.children[0].name + " child position", this.children[0].position.quick(), "length", deltaPos.length().toPrecision(2));
+      console.log("" + this.name + " position", this.position.quick(), "" + this.children[0].name + " child position", this.children[0].position.quick(), "length", this.children[0].position.length().toPrecision(4));
       this.add(this._directionArrow);
+      this._directionArrow.label("Direction", 2);
     }
     this.quaternion.setFromAxisAngle(localAxis, angle);
     return this;
@@ -70,39 +95,6 @@
   THREE.Vector3.prototype.visualizeFromPosition = function() {
     this._arrow.position = this.position;
     return this;
-  };
-
-  THREE.Scene.prototype.scene = THREE.SkinnedMesh.prototype.scene = THREE.Bone.prototype.scene = THREE.Object3D.scene = function() {
-    if (this.parent === void 0) {
-      return this;
-    } else {
-      return this.parent.scene();
-    }
-  };
-
-  THREE.Bone.prototype.visualizeRecursive = THREE.Object3D.prototype.visualizeRecursive = function() {
-    var child, l, _i, _len, _ref, _results;
-    this._visualizeX || (this._visualizeX = new THREE.Vector3);
-    this._visualizeY || (this._visualizeY = new THREE.Vector3);
-    this._visualizeZ || (this._visualizeZ = new THREE.Vector3);
-    l = 3;
-    if (this.children[0]) {
-      l = vec3().subVectors(this.children[0].position, this.position);
-    }
-    this._visualizeX.set(1, 0, 0).visualize(this, 'red', l.x);
-    this._visualizeY.set(0, 1, 0).visualize(this, 0x00ff00, l.y);
-    this._visualizeZ.set(0, 0, 1).visualize(this, 0x0000ff, l.z);
-    _ref = this.children;
-    _results = [];
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      child = _ref[_i];
-      if (!(child instanceof THREE.ArrowHelper)) {
-        _results.push(child.visualizeRecursive());
-      } else {
-        _results.push(void 0);
-      }
-    }
-    return _results;
   };
 
 }).call(this);

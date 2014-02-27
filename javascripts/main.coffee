@@ -52,7 +52,7 @@ scene.add(pointLight)
 #scene.add(yellowDot)
 
 
-camera = new THREE.PerspectiveCamera(
+window.camera = new THREE.PerspectiveCamera(
   90,
   WIDTH / HEIGHT,
   1,
@@ -65,7 +65,7 @@ cameraPositions = {
   rightSide: [25,0,0]
   top: [0,14,0]
 }
-cameraPosition = 'back'
+cameraPosition = 'top'
 renderer.domElement.onclick = ->
   camera.position.fromArray(cameraPositions[cameraPosition])
   camera.lookAt(new THREE.Vector3(0, 0, 0))
@@ -80,14 +80,12 @@ animation = undefined
 handMesh = undefined
 
 
-textGeo = new THREE.TextGeometry('Y AXIS', {
+text = new THREE.Mesh(new THREE.TextGeometry('Y AXIS', {
     size: 0.5,
     height: 0.2
-});
-color = new THREE.Color();
-color.setRGB(255, 250, 250);
-textMaterial = new THREE.MeshBasicMaterial({ color: color });
-text = new THREE.Mesh(textGeo , textMaterial);
+  }),
+  new THREE.MeshBasicMaterial({ color: 0xffffff })
+)
 
 text.position.x = axis.geometry.vertices[1].x;
 text.position.y = axis.geometry.vertices[1].y;
@@ -101,14 +99,14 @@ visualizeBones = ( whichMesh ) ->
      visualizeBone( child , whichMesh );
 
 visualizeBone =( bone , parentMesh ) ->
-  length = if bone.children[0] then vec3().subVectors(bone.children[0].position, bone.position).length() else 0.2
+  length = if bone.children[0] then bone.children[0].position.length() else 0.2
+  console.log bone.name, length
   m = new THREE.Mesh(
        new THREE.CubeGeometry(.4, .2, length),
        new THREE.MeshPhongMaterial(color: 0x00ff00)
   )
   parentMesh.add( m )
   m.position = bone.position
-  m.rotation = bone.rotation
   m.quaternion = bone.quaternion
 
   parentMesh.add new THREE.AxisHelper(1)
@@ -123,7 +121,7 @@ visualizeBone =( bone , parentMesh ) ->
 # ObjectLoader seems to load empty objects for materials and geometries, tries to act on json.object rather than json.objects
   material = materials[0]
   material.skinning = true
-#  material.wireframe = true
+  material.wireframe = true
 
 #  THREE.GeometryUtils.center(geometryWithBones)
   handMesh = new THREE.SkinnedMesh(
@@ -166,9 +164,9 @@ visualizeBone =( bone , parentMesh ) ->
     rigFinger.mip = rigFinger.children[0]
     rigFinger.dip = rigFinger.children[0].children[0]
 
-    rigFinger.add new THREE.AxisHelper(1)
-    rigFinger.mip.add new THREE.AxisHelper(1)
-    rigFinger.dip.add new THREE.AxisHelper(1)
+#    rigFinger.add new THREE.AxisHelper(1)
+#    rigFinger.mip.add new THREE.AxisHelper(1)
+#    rigFinger.dip.add new THREE.AxisHelper(1)
 #    rigFinger.add  new THREE.Mesh(
 #      new THREE.CubeGeometry(.4, .2, 0.8),
 #      new THREE.MeshPhongMaterial(color: 0x00ff00)
@@ -198,7 +196,14 @@ visualizeBone =( bone , parentMesh ) ->
     rigFinger.dip.worldAxisReverse = new THREE.Vector3(0,0,1)
 
   palm.worldUp         = (new THREE.Vector3).visualize(palm, 0xff0000)
+#  arrow = (new THREE.ArrowHelper(palm.worldUp, zeroVector, 10, 0xff0000))
+#  arrow.label 'palm world up'
+#  palm.add arrow
+
   palm.worldDirection  = (new THREE.Vector3).visualize(palm, 0xffff00)
+#  arrow2 = (new THREE.ArrowHelper(palm.worldDirection, zeroVector, 10, 0xffff00))
+#  arrow2.label 'palm world direction'
+#  palm.add arrow2
 #  indexFinger.worldUp.visualize(palm, 0x770000)
 #  indexFinger.worldDirection.visualize(palm, 0x777700)
 #  indexFinger.worldAxis.visualize(palm, 0x00ff00)
@@ -252,8 +257,8 @@ visualizeBone =( bone , parentMesh ) ->
       palm.updateMatrixWorld(true)
 
       for leapFinger, i in leapHand.fingers
-        if i != 0
-#        if i == 1
+#        if i != 0
+        if i == 1
 #        if i == 0
           # wrist -> mcp -> pip -> dip -> tip
 
@@ -265,8 +270,6 @@ visualizeBone =( bone , parentMesh ) ->
           palm.children[i].positionFromWorld()
           palm.children[i].mip.positionFromWorld()
           palm.children[i].dip.positionFromWorld()
-
-  #        palm.children[i].visualizeRecursive()
 
       palm.worldUp.visualize()
       palm.worldDirection.visualize()
@@ -284,4 +287,3 @@ visualizeBone =( bone , parentMesh ) ->
 #      middleFinger.localAxis.normalize()
 
       renderer.render(scene, camera)
-

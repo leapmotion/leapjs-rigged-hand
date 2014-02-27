@@ -2,6 +2,21 @@ window.TO_RAD = Math.PI / 180
 window.TO_DEG = 1 / TO_RAD
 window.zeroVector = new THREE.Vector3(0,0,0)
 # accepts three points in two lines, with b being the join.
+THREE.ArrowHelper.prototype.label = (text, scale = 1)->
+  text = new THREE.Mesh(
+    new THREE.TextGeometry(text, {
+      size: this.line.scale.y / 20 * scale,
+      height: this.line.scale.y / 100 * scale
+    }),
+    new THREE.MeshBasicMaterial( color: @line.material.color )
+  )
+  text.rotation = new THREE.Euler(0,0,90 * TO_RAD)
+  text.position = vec3(-0.1,0,0)
+
+  @add(text)
+
+
+
 THREE.Quaternion.prototype.setFromPoints = (a, b, c)->
   @setFromVectors(
     (new THREE.Vector3).subVectors(a, b).normalize(),
@@ -78,9 +93,23 @@ THREE.Bone.prototype.positionFromWorld = ->
 #    @_localAxisArrow = new THREE.ArrowHelper(localAxis, zeroVector, 4, 0xffcc33)
 #    @add @_localAxisArrow
 
+  unless @axisHelper
+    @axisHelper = new THREE.AxisHelper(2)
+    @add @axisHelper
+
+
+    length = @children[0].position.length()
+    m = new THREE.Mesh(
+       new THREE.CubeGeometry(.4, .2, length),
+       new THREE.MeshPhongMaterial(color: 0x00ffff, wireframe: true)
+    )
+    @add( m )
+
+
   unless @_worldDirectionArrow
     @_worldDirectionArrow = new THREE.ArrowHelper(@worldDirection, zeroVector, 4, 0x99cc33)
     @add @_worldDirectionArrow
+#    @_worldDirectionArrow.label "World Direction (#{@name})"
 
   unless @_parentWorldDirectionArrow
     @_parentWorldDirectionArrow = new THREE.ArrowHelper(@parent.worldDirection, zeroVector, 4, 0xff9933)
@@ -94,14 +123,14 @@ THREE.Bone.prototype.positionFromWorld = ->
   deltaPos = undefined
   unless @_directionArrow
     if @children[0]
-      deltaPos = vec3().subVectors(@children[0].position, @position)
       @_directionArrow = new THREE.ArrowHelper(
-        deltaPos,
+        @children[0].position,
         zeroVector,
-        deltaPos.length() * 100
+        @children[0].position.length()
       ,  0x33ccff)
-    console.log "#{@name} position", @position.quick(), "#{@children[0].name} child position", @children[0].position.quick(), "length", deltaPos.length().toPrecision(2)
+    console.log "#{@name} position", @position.quick(), "#{@children[0].name} child position", @children[0].position.quick(), "length", @children[0].position.length().toPrecision(4)
     @add @_directionArrow
+    @_directionArrow.label "Direction", 2
 
 #  unless @yArrow
 #    if @children[0]
@@ -116,6 +145,11 @@ THREE.Bone.prototype.positionFromWorld = ->
 #      @zArrow = vec3(0,0,1).visualize(this, 0x0000ff, 3)
 
   @quaternion.setFromAxisAngle(localAxis, angle)
+  # the bones are actually built crooked - the appear not to point in to each-other.
+#  if @name = 'Finger_11'
+#    @matrix.lookAt(@children[0].position, zeroVector, vec3(0,1,0))
+#    @matrix.decompose(@position, @quaternion, @scale)
+#    @updateMatrixWorld(true)
   @
 
 # for some reason, we can't store custom properties on the Vector3
@@ -142,29 +176,3 @@ THREE.Vector3.prototype.visualizeFrom = (position)->
 THREE.Vector3.prototype.visualizeFromPosition = ->
   @_arrow.position = @position
   @
-
-THREE.Scene.prototype.scene = THREE.SkinnedMesh.prototype.scene = THREE.Bone.prototype.scene = THREE.Object3D.scene = ->
-  if @parent == undefined
-    return this
-  else
-    return @parent.scene()
-
-THREE.Bone.prototype.visualizeRecursive = THREE.Object3D.prototype.visualizeRecursive = ->
-  @_visualizeX ||= new THREE.Vector3
-  @_visualizeY ||= new THREE.Vector3
-  @_visualizeZ ||= new THREE.Vector3
-
-  l = 3
-  if @children[0]
-    l = vec3().subVectors(@children[0].position, @position)#.length()
-  #  @_visualizeX.set(1,0,0).applyQuaternion(@_quaternion).visualize(this, 'red', 3)
-  #  @_visualizeY.set(0,1,0).applyQuaternion(@_quaternion).visualize(this, 0x00ff00, 3)
-  #  @_visualizeZ.set(0,0,1).applyQuaternion(@_quaternion).visualize(this, 0x0000ff, 3)
-  @_visualizeX.set(1,0,0).visualize(this, 'red', l.x)
-  @_visualizeY.set(0,1,0).visualize(this, 0x00ff00, l.y)
-  @_visualizeZ.set(0,0,1).visualize(this, 0x0000ff, l.z)
-#  debugger
-
-  for child in @children
-    unless child instanceof THREE.ArrowHelper
-      child.visualizeRecursive()
