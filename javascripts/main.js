@@ -58,8 +58,20 @@
 
   scene.add(camera);
 
+  THREE.Quaternion.prototype.setFromVectors = function(a, b) {
+    axis = (new THREE.Vector3).crossVectors(a, b);
+    this.set(axis.x, axis.y, axis.z, 1 + a.dot(b));
+    this.normalize();
+    return this;
+  };
+
   THREE.Bone.prototype.positionFromWorld = function(eye, target) {
-    this.matrix.lookAt(eye, target, this.up);
+    var angle, directionDotParentDirection;
+    directionDotParentDirection = this.worldDirection.dot(this.parent.worldDirection);
+    angle = Math.acos(directionDotParentDirection);
+    this.worldAxis.crossVectors(this.parent.worldDirection, this.worldDirection).normalize();
+    this.worldUp.set(0, 0, 0).add(this.parent.worldUp.clone().multiplyScalar(directionDotParentDirection)).add((new THREE.Vector3).crossVectors(this.worldAxis, this.parent.worldUp).multiplyScalar(Math.sin(angle))).add(this.worldAxis.clone().multiplyScalar(this.worldAxis.dot(this.parent.worldUp) * (1 - directionDotParentDirection))).normalize();
+    this.matrix.lookAt(eye, target, this.worldUp);
     this.worldQuaternion.setFromRotationMatrix(this.matrix);
     this.quaternion.copy(this.parent.worldQuaternion).inverse().multiply(this.worldQuaternion);
     return this;
@@ -76,13 +88,13 @@
     var basicDotMesh, dots, material, rigFinger, scale, _i, _len, _ref;
     material = materials[0];
     material.skinning = true;
-    material.wireframe = true;
     window.handMesh = new THREE.SkinnedMesh(geometryWithBones, material);
     handMesh.castShadow = true;
     handMesh.receiveShadow = true;
     scene.add(handMesh);
     window.palm = handMesh.children[0];
     palm.matrixWorld = handMesh.matrix;
+    palm.worldUp = new THREE.Vector3;
     _ref = palm.children;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       rigFinger = _ref[_i];
@@ -91,6 +103,15 @@
       rigFinger.worldQuaternion = new THREE.Quaternion;
       rigFinger.mip.worldQuaternion = new THREE.Quaternion;
       rigFinger.dip.worldQuaternion = new THREE.Quaternion;
+      rigFinger.worldAxis = new THREE.Vector3;
+      rigFinger.mip.worldAxis = new THREE.Vector3;
+      rigFinger.dip.worldAxis = new THREE.Vector3;
+      rigFinger.worldDirection = new THREE.Vector3;
+      rigFinger.mip.worldDirection = new THREE.Vector3;
+      rigFinger.dip.worldDirection = new THREE.Vector3;
+      rigFinger.worldUp = new THREE.Vector3;
+      rigFinger.mip.worldUp = new THREE.Vector3;
+      rigFinger.dip.worldUp = new THREE.Vector3;
     }
     palm.worldDirection = new THREE.Vector3;
     palm.worldQuaternion = handMesh.quaternion;
@@ -106,12 +127,16 @@
         }
         palm.worldDirection.fromArray(leapHand.direction);
         palm.up.fromArray(leapHand.palmNormal).multiplyScalar(-1);
+        palm.worldUp.fromArray(leapHand.palmNormal).multiplyScalar(-1);
         handMesh.position.fromLeap(leapHand.stabilizedPalmPosition, scale);
         handMesh.matrix.lookAt(palm.worldDirection, zeroVector, palm.up);
         palm.worldQuaternion.setFromRotationMatrix(handMesh.matrix);
         _ref1 = leapHand.fingers;
         for (i = _j = 0, _len1 = _ref1.length; _j < _len1; i = ++_j) {
           leapFinger = _ref1[i];
+          palm.children[i].worldDirection.subVectors(leapFinger.pipPosition3, leapFinger.mcpPosition3).normalize();
+          palm.children[i].mip.worldDirection.subVectors(leapFinger.dipPosition3, leapFinger.pipPosition3).normalize();
+          palm.children[i].dip.worldDirection.subVectors(leapFinger.tipPosition3, leapFinger.dipPosition3).normalize();
           palm.children[i].positionFromWorld(leapFinger.pipPosition3, leapFinger.mcpPosition3);
           palm.children[i].mip.positionFromWorld(leapFinger.dipPosition3, leapFinger.pipPosition3);
           palm.children[i].dip.positionFromWorld(leapFinger.tipPosition3, leapFinger.dipPosition3);

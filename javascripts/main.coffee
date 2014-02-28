@@ -46,10 +46,30 @@ renderer.domElement.click()
 
 scene.add(camera)
 
-
+# http://lolengine.net/blog/2013/09/18/beautiful-maths-quaternion-from-vectors
+THREE.Quaternion.prototype.setFromVectors = (a, b)->
+  axis = (new THREE.Vector3).crossVectors(a, b)
+  @set(axis.x, axis.y, axis.z, 1 + a.dot(b))
+  @normalize()
+  @
 
 THREE.Bone.prototype.positionFromWorld = (eye, target) ->
-  @matrix.lookAt(eye, target, @up)
+
+  directionDotParentDirection = @worldDirection.dot(@parent.worldDirection)
+  angle = Math.acos directionDotParentDirection
+  @worldAxis.crossVectors(@parent.worldDirection, @worldDirection).normalize()
+
+  # http://en.wikipedia.org/wiki/Rodrigues'_rotation_formula
+  # v = palmNormal = parentUp
+  # k = rotation axis = worldAxis
+  @worldUp.set(0,0,0)
+    .add(@parent.worldUp.clone().multiplyScalar(directionDotParentDirection))
+    .add((new THREE.Vector3).crossVectors(@worldAxis, @parent.worldUp).multiplyScalar(Math.sin(angle)))
+    .add(@worldAxis.clone().multiplyScalar(@worldAxis.dot(@parent.worldUp) * (1 - directionDotParentDirection)))
+    .normalize()
+
+
+  @matrix.lookAt(eye, target, @worldUp)
   @worldQuaternion.setFromRotationMatrix( @matrix )
   # Set this quaternion to be only the local change:
   @quaternion.copy(@parent.worldQuaternion).inverse().multiply(@worldQuaternion)
@@ -66,7 +86,7 @@ showRawPositions = true
 (new THREE.JSONLoader).load 'javascripts/27left.json', (geometryWithBones, materials) ->
   material = materials[0]
   material.skinning = true
-  material.wireframe = true
+#  material.wireframe = true
 
   window.handMesh = new THREE.SkinnedMesh(
     geometryWithBones, material
@@ -79,6 +99,7 @@ showRawPositions = true
   window.palm = handMesh.children[0]
   # actually we need the above so that position is factored in
   palm.matrixWorld = handMesh.matrix
+  palm.worldUp = new THREE.Vector3
 
 
   # initialize
@@ -89,6 +110,18 @@ showRawPositions = true
     rigFinger.worldQuaternion =     new THREE.Quaternion
     rigFinger.mip.worldQuaternion = new THREE.Quaternion
     rigFinger.dip.worldQuaternion = new THREE.Quaternion
+
+    rigFinger.    worldAxis = new THREE.Vector3
+    rigFinger.mip.worldAxis = new THREE.Vector3
+    rigFinger.dip.worldAxis = new THREE.Vector3
+
+    rigFinger.    worldDirection = new THREE.Vector3
+    rigFinger.mip.worldDirection = new THREE.Vector3
+    rigFinger.dip.worldDirection = new THREE.Vector3
+
+    rigFinger.    worldUp = new THREE.Vector3
+    rigFinger.mip.worldUp = new THREE.Vector3
+    rigFinger.dip.worldUp = new THREE.Vector3
 
   palm.worldDirection  = new THREE.Vector3
   palm.worldQuaternion = handMesh.quaternion
@@ -110,6 +143,7 @@ showRawPositions = true
 
       palm.worldDirection.fromArray(leapHand.direction)
       palm.up.fromArray(leapHand.palmNormal).multiplyScalar(-1)
+      palm.worldUp.fromArray(leapHand.palmNormal).multiplyScalar(-1)
 
       handMesh.position.fromLeap(leapHand.stabilizedPalmPosition, scale)
       handMesh.matrix.lookAt(palm.worldDirection, zeroVector, palm.up)
@@ -118,6 +152,15 @@ showRawPositions = true
 
       for leapFinger, i in leapHand.fingers
         # wrist -> mcp -> pip -> dip -> tip
+#          quaternion = (new THREE.Quaternion).setFromVectors(
+#            palm.worldDirection
+#            vec3().subVectors(leapFinger.pipPosition3, leapFinger.mcpPosition3).normalize()
+#          )
+
+        palm.children[i].    worldDirection.subVectors(leapFinger.pipPosition3, leapFinger.mcpPosition3).normalize()
+        palm.children[i].mip.worldDirection.subVectors(leapFinger.dipPosition3, leapFinger.pipPosition3).normalize()
+        palm.children[i].dip.worldDirection.subVectors(leapFinger.tipPosition3, leapFinger.dipPosition3).normalize()
+
         palm.children[i].positionFromWorld(leapFinger.pipPosition3, leapFinger.mcpPosition3)
         palm.children[i].mip.positionFromWorld(leapFinger.dipPosition3, leapFinger.pipPosition3)
         palm.children[i].dip.positionFromWorld(leapFinger.tipPosition3, leapFinger.dipPosition3)
