@@ -6,9 +6,12 @@
 
   window.zeroVector = new THREE.Vector3(0, 0, 0);
 
-  THREE.ArrowHelper.prototype.label = function(text, scale) {
+  THREE.ArrowHelper.prototype.label = function(text, scale, flip) {
     if (scale == null) {
       scale = 1;
+    }
+    if (flip == null) {
+      flip = false;
     }
     text = new THREE.Mesh(new THREE.TextGeometry(text, {
       size: this.line.scale.y / 20 * scale,
@@ -16,13 +19,14 @@
     }), new THREE.MeshBasicMaterial({
       color: this.line.material.color
     }));
-    text.rotation = new THREE.Euler(0, 0, 90 * TO_RAD);
-    text.position = vec3(-0.1, 0, 0);
+    if (flip) {
+      text.rotation = new THREE.Euler(180 * TO_RAD, 180 * TO_RAD, 90 * TO_RAD);
+      text.position = vec3(0, 4, 0);
+    } else {
+      text.rotation = new THREE.Euler(0, 0, 90 * TO_RAD);
+      text.position = vec3(-0.1, 0, 0);
+    }
     return this.add(text);
-  };
-
-  THREE.Quaternion.prototype.setFromPoints = function(a, b, c) {
-    return this.setFromVectors((new THREE.Vector3).subVectors(a, b).normalize(), (new THREE.Vector3).subVectors(c, b).normalize());
   };
 
   THREE.Vector3.prototype.quick = function() {
@@ -33,55 +37,18 @@
     return new THREE.Vector3(x, y, z);
   };
 
-  THREE.Bone.prototype.positionFromWorld = function() {
-    var angle, deltaPos, directionDotParentDirection, length, localAxis, m, worldAxisLevel;
-    directionDotParentDirection = this.worldDirection.dot(this.parent.worldDirection);
-    angle = Math.acos(directionDotParentDirection);
-    this.localAxisLevel || (this.localAxisLevel = new THREE.Vector3(1, 0, 0));
-    worldAxisLevel = (new THREE.Vector3).crossVectors(this.parent.worldDirection, this.parent.worldUp).normalize();
-    this.worldAxis.crossVectors(this.parent.worldDirection, this.worldDirection).normalize();
-    this.worldAxisReverse.crossVectors(this.worldDirection, this.parent.worldDirection).normalize();
-    this.worldUp || (this.worldUp = new THREE.Vector3);
-    this.worldUp.set(0, 0, 0).add(this.parent.worldUp.clone().multiplyScalar(directionDotParentDirection)).add((new THREE.Vector3).crossVectors(this.worldAxis, this.parent.worldUp).multiplyScalar(Math.sin(angle))).add(this.worldAxis.clone().multiplyScalar(this.worldAxis.dot(this.parent.worldUp) * (1 - directionDotParentDirection))).normalize();
-    localAxis = this.localAxisLevel.clone().add(worldAxisLevel).sub(this.worldAxisReverse).normalize();
-    if (!this.axisHelper) {
-      this.axisHelper = new THREE.AxisHelper(2);
-      this.add(this.axisHelper);
-      length = this.children[0].position.length();
-      m = new THREE.Mesh(new THREE.CubeGeometry(.4, .2, length), new THREE.MeshPhongMaterial({
-        color: 0x00ffff,
-        wireframe: true
-      }));
-      this.add(m);
+  THREE.Vector3.prototype.visualize = function(parent, color, options) {
+    if (options == null) {
+      options = {};
     }
-    if (!this._worldDirectionArrow) {
-      this._worldDirectionArrow = new THREE.ArrowHelper(this.worldDirection, zeroVector, 4, 0x99cc33);
-      this.add(this._worldDirectionArrow);
-    }
-    if (!this._parentWorldDirectionArrow) {
-      this._parentWorldDirectionArrow = new THREE.ArrowHelper(this.parent.worldDirection, zeroVector, 4, 0xff9933);
-      console.log(this.parent.worldDirection.quick(), this.position.quick());
-      this.add(this._parentWorldDirectionArrow);
-    }
-    deltaPos = void 0;
-    if (!this._directionArrow) {
-      if (this.children[0]) {
-        this._directionArrow = new THREE.ArrowHelper(this.children[0].position, zeroVector, this.children[0].position.length(), 0x33ccff);
-      }
-      console.log("" + this.name + " position", this.position.quick(), "" + this.children[0].name + " child position", this.children[0].position.quick(), "length", this.children[0].position.length().toPrecision(4));
-      this.add(this._directionArrow);
-      this._directionArrow.label("Direction", 2);
-    }
-    this.quaternion.setFromAxisAngle(localAxis, angle);
-    return this;
-  };
-
-  THREE.Vector3.prototype.visualize = function(parent, color, length) {
-    length || (length = 10);
+    options.length || (options.length = 10);
     if (this._arrow) {
       this._arrow.setDirection(this);
     } else {
-      this._arrow = new THREE.ArrowHelper(this, new THREE.Vector3(0, 0, 0), length, color);
+      this._arrow = new THREE.ArrowHelper(this, options.from || new THREE.Vector3(0, 0, 0), options.length, color);
+      if (options.label) {
+        this._arrow.label(options.label, 1, options.flip);
+      }
       parent.add(this._arrow);
     }
     return this;

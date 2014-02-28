@@ -6,8 +6,8 @@ Leap.plugin 'threejs', ->
         hand.fingers = _.sortBy(hand.fingers, (finger)-> finger.id)
 
         for finger in hand.fingers
-          finger.mcpPosition = (new THREE.Vector3).fromArray(finger.mcpPosition)
-          finger.pipPosition = (new THREE.Vector3).fromArray(finger.pipPosition)
-          finger.dipPosition = (new THREE.Vector3).fromArray(finger.dipPosition)
-          finger.tipPosition = (new THREE.Vector3).fromArray(finger.tipPosition)
+          finger.mcpPosition3 = (new THREE.Vector3).fromArray(finger.mcpPosition)
+          finger.pipPosition3 = (new THREE.Vector3).fromArray(finger.pipPosition)
+          finger.dipPosition3 = (new THREE.Vector3).fromArray(finger.dipPosition)
+          finger.tipPosition3 = (new THREE.Vector3).fromArray(finger.tipPosition)
   }

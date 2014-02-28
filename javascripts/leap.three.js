@@ -17,10 +17,10 @@
             _results1 = [];
             for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
               finger = _ref1[_j];
-              finger.mcpPosition = (new THREE.Vector3).fromArray(finger.mcpPosition);
-              finger.pipPosition = (new THREE.Vector3).fromArray(finger.pipPosition);
-              finger.dipPosition = (new THREE.Vector3).fromArray(finger.dipPosition);
-              _results1.push(finger.tipPosition = (new THREE.Vector3).fromArray(finger.tipPosition));
+              finger.mcpPosition3 = (new THREE.Vector3).fromArray(finger.mcpPosition);
+              finger.pipPosition3 = (new THREE.Vector3).fromArray(finger.pipPosition);
+              finger.dipPosition3 = (new THREE.Vector3).fromArray(finger.dipPosition);
+              _results1.push(finger.tipPosition3 = (new THREE.Vector3).fromArray(finger.tipPosition));
             }
             return _results1;
           })());
