@@ -1,12 +1,13 @@
 # todo: document that this must be run via http server
 # Options include:
 # parent - Optional - A ThreeJS.Object3d, such as a scene or camera, which the hands will be added to
-# offset - ThreeJS.Vector3, a constant offset between the parent and the hands.  Default is new THREE.Vector3(0,-5,0)
+# offset - ThreeJS.Vector3, a constant offset between the parent and the hands.  Default is new THREE.Vector3(0,-10,0)
 # scale - An integer, sizing the rigged hand relative to your scene.  Default is 1
 # renderFn - If provided, this will be executed on every animation frame.
 #            E.g. function(){ renderer.render(scene, camera) }
 # materialOptions - A hash of properties for the material, such as wireframe: true
 # meshOptions - A hash of properties for the hand meshes, such as castShadow: true
+# dotsMode - shows a dot for every actual joint position, for comparison against the mesh calculations
 
 `
 var rigs = {};
@@ -204,32 +205,34 @@ var _sortBy = function (obj, iterator, context) {
 }`
 
 # http://lolengine.net/blog/2013/09/18/beautiful-maths-quaternion-from-vectors
-THREE.Quaternion.prototype.setFromVectors = (a, b)->
-  axis = (new THREE.Vector3).crossVectors(a, b)
-  @set(axis.x, axis.y, axis.z, 1 + a.dot(b))
-  @normalize()
-  @
+unless THREE.Quaternion.prototype.setFromVectors
+  THREE.Quaternion.prototype.setFromVectors = (a, b)->
+    axis = (new THREE.Vector3).crossVectors(a, b)
+    @set(axis.x, axis.y, axis.z, 1 + a.dot(b))
+    @normalize()
+    @
 
-THREE.Bone.prototype.positionFromWorld = (eye, target) ->
-  directionDotParentDirection = @worldDirection.dot(@parent.worldDirection)
-  angle = Math.acos directionDotParentDirection
-  @worldAxis.crossVectors(@parent.worldDirection, @worldDirection).normalize()
+unless THREE.Quaternion.prototype.positionFromWorld
+  THREE.Bone.prototype.positionFromWorld = (eye, target) ->
+    directionDotParentDirection = @worldDirection.dot(@parent.worldDirection)
+    angle = Math.acos directionDotParentDirection
+    @worldAxis.crossVectors(@parent.worldDirection, @worldDirection).normalize()
 
-  # http://en.wikipedia.org/wiki/Rodrigues'_rotation_formula
-  # v = palmNormal = parentUp
-  # k = rotation axis = worldAxis
-  @worldUp.set(0,0,0)
-    .add(@parent.worldUp.clone().multiplyScalar(directionDotParentDirection))
-    .add((new THREE.Vector3).crossVectors(@worldAxis, @parent.worldUp).multiplyScalar(Math.sin(angle)))
-    .add(@worldAxis.clone().multiplyScalar(@worldAxis.dot(@parent.worldUp) * (1 - directionDotParentDirection)))
-    .normalize()
+    # http://en.wikipedia.org/wiki/Rodrigues'_rotation_formula
+    # v = palmNormal = parentUp
+    # k = rotation axis = worldAxis
+    @worldUp.set(0,0,0)
+      .add(@parent.worldUp.clone().multiplyScalar(directionDotParentDirection))
+      .add((new THREE.Vector3).crossVectors(@worldAxis, @parent.worldUp).multiplyScalar(Math.sin(angle)))
+      .add(@worldAxis.clone().multiplyScalar(@worldAxis.dot(@parent.worldUp) * (1 - directionDotParentDirection)))
+      .normalize()
 
 
-  @matrix.lookAt(eye, target, @worldUp)
-  @worldQuaternion.setFromRotationMatrix( @matrix )
-  # Set this quaternion to be only the local change:
-  @quaternion.copy(@parent.worldQuaternion).inverse().multiply(@worldQuaternion)
-  @
+    @matrix.lookAt(eye, target, @worldUp)
+    @worldQuaternion.setFromRotationMatrix( @matrix )
+    # Set this quaternion to be only the local change:
+    @quaternion.copy(@parent.worldQuaternion).inverse().multiply(@worldQuaternion)
+    @
 
 scene = undefined
 renderer = undefined
@@ -352,6 +355,13 @@ Leap.plugin 'riggedHand', (scope = {})->
     scope.parent.remove leapHand.data('riggedHand.mesh')
     scope.renderFn() if scope.renderFn
 
+  # for use when dotsMode = true
+  dots = {}
+  basicDotMesh = new THREE.Mesh(
+    new THREE.IcosahedronGeometry( .3 , 1 ) ,
+    new THREE.MeshNormalMaterial()
+  )
+
   {
     hand: (leapHand)->
       # this works around a subtle bug where non-extended fingers would appear after extended ones
@@ -365,9 +375,6 @@ Leap.plugin 'riggedHand', (scope = {})->
         finger.tipPosition3 = (new THREE.Vector3).fromArray(finger.tipPosition)
 
       handMesh = leapHand.data('riggedHand.mesh')
-      unless handMesh
-        debugger
-        handMesh = leapHand.data('riggedHand.mesh')
       palm = handMesh.children[0]
 
       # set heading on palm so that finger.parent can access
@@ -390,6 +397,14 @@ Leap.plugin 'riggedHand', (scope = {})->
         palm.children[i].    positionFromWorld(leapFinger.pipPosition3, leapFinger.mcpPosition3)
         palm.children[i].mip.positionFromWorld(leapFinger.dipPosition3, leapFinger.pipPosition3)
         palm.children[i].dip.positionFromWorld(leapFinger.tipPosition3, leapFinger.dipPosition3)
+
+        if scope.dotsMode
+          for point in ['mcp', 'pip', 'dip', 'tip']
+            unless dots["#{point}-#{i}"]
+              dots["#{point}-#{i}"] = basicDotMesh.clone()
+              scope.parent.add dots["#{point}-#{i}"]
+
+            dots["#{point}-#{i}"].position.fromLeap(leapFinger["#{point}Position"], leapHand.data('riggedHand.scale'))
 
       scope.renderFn() if scope.renderFn
   }

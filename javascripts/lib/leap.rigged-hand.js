@@ -196,25 +196,29 @@ var _sortBy = function (obj, iterator, context) {
 };
   var camera, initScene, renderer, scene;
 
-  THREE.Quaternion.prototype.setFromVectors = function(a, b) {
-    var axis;
-    axis = (new THREE.Vector3).crossVectors(a, b);
-    this.set(axis.x, axis.y, axis.z, 1 + a.dot(b));
-    this.normalize();
-    return this;
-  };
+  if (!THREE.Quaternion.prototype.setFromVectors) {
+    THREE.Quaternion.prototype.setFromVectors = function(a, b) {
+      var axis;
+      axis = (new THREE.Vector3).crossVectors(a, b);
+      this.set(axis.x, axis.y, axis.z, 1 + a.dot(b));
+      this.normalize();
+      return this;
+    };
+  }
 
-  THREE.Bone.prototype.positionFromWorld = function(eye, target) {
-    var angle, directionDotParentDirection;
-    directionDotParentDirection = this.worldDirection.dot(this.parent.worldDirection);
-    angle = Math.acos(directionDotParentDirection);
-    this.worldAxis.crossVectors(this.parent.worldDirection, this.worldDirection).normalize();
-    this.worldUp.set(0, 0, 0).add(this.parent.worldUp.clone().multiplyScalar(directionDotParentDirection)).add((new THREE.Vector3).crossVectors(this.worldAxis, this.parent.worldUp).multiplyScalar(Math.sin(angle))).add(this.worldAxis.clone().multiplyScalar(this.worldAxis.dot(this.parent.worldUp) * (1 - directionDotParentDirection))).normalize();
-    this.matrix.lookAt(eye, target, this.worldUp);
-    this.worldQuaternion.setFromRotationMatrix(this.matrix);
-    this.quaternion.copy(this.parent.worldQuaternion).inverse().multiply(this.worldQuaternion);
-    return this;
-  };
+  if (!THREE.Quaternion.prototype.positionFromWorld) {
+    THREE.Bone.prototype.positionFromWorld = function(eye, target) {
+      var angle, directionDotParentDirection;
+      directionDotParentDirection = this.worldDirection.dot(this.parent.worldDirection);
+      angle = Math.acos(directionDotParentDirection);
+      this.worldAxis.crossVectors(this.parent.worldDirection, this.worldDirection).normalize();
+      this.worldUp.set(0, 0, 0).add(this.parent.worldUp.clone().multiplyScalar(directionDotParentDirection)).add((new THREE.Vector3).crossVectors(this.worldAxis, this.parent.worldUp).multiplyScalar(Math.sin(angle))).add(this.worldAxis.clone().multiplyScalar(this.worldAxis.dot(this.parent.worldUp) * (1 - directionDotParentDirection))).normalize();
+      this.matrix.lookAt(eye, target, this.worldUp);
+      this.worldQuaternion.setFromRotationMatrix(this.matrix);
+      this.quaternion.copy(this.parent.worldQuaternion).inverse().multiply(this.worldQuaternion);
+      return this;
+    };
+  }
 
   scene = void 0;
 
@@ -263,7 +267,7 @@ var _sortBy = function (obj, iterator, context) {
   };
 
   Leap.plugin('riggedHand', function(scope) {
-    var createMesh, zeroVector;
+    var basicDotMesh, createMesh, dots, zeroVector;
     if (scope == null) {
       scope = {};
     }
@@ -321,9 +325,11 @@ var _sortBy = function (obj, iterator, context) {
         return scope.renderFn();
       }
     });
+    dots = {};
+    basicDotMesh = new THREE.Mesh(new THREE.IcosahedronGeometry(.3, 1), new THREE.MeshNormalMaterial());
     return {
       hand: function(leapHand) {
-        var finger, handMesh, i, leapFinger, palm, _i, _j, _len, _len1, _ref, _ref1;
+        var finger, handMesh, i, leapFinger, palm, point, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2;
         leapHand.fingers = _sortBy(leapHand.fingers, function(finger) {
           return finger.id;
         });
@@ -336,10 +342,6 @@ var _sortBy = function (obj, iterator, context) {
           finger.tipPosition3 = (new THREE.Vector3).fromArray(finger.tipPosition);
         }
         handMesh = leapHand.data('riggedHand.mesh');
-        if (!handMesh) {
-          debugger;
-          handMesh = leapHand.data('riggedHand.mesh');
-        }
         palm = handMesh.children[0];
         palm.worldDirection.fromArray(leapHand.direction);
         palm.up.fromArray(leapHand.palmNormal).multiplyScalar(-1);
@@ -356,6 +358,17 @@ var _sortBy = function (obj, iterator, context) {
           palm.children[i].positionFromWorld(leapFinger.pipPosition3, leapFinger.mcpPosition3);
           palm.children[i].mip.positionFromWorld(leapFinger.dipPosition3, leapFinger.pipPosition3);
           palm.children[i].dip.positionFromWorld(leapFinger.tipPosition3, leapFinger.dipPosition3);
+          if (scope.dotsMode) {
+            _ref2 = ['mcp', 'pip', 'dip', 'tip'];
+            for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+              point = _ref2[_k];
+              if (!dots["" + point + "-" + i]) {
+                dots["" + point + "-" + i] = basicDotMesh.clone();
+                scope.parent.add(dots["" + point + "-" + i]);
+              }
+              dots["" + point + "-" + i].position.fromLeap(leapFinger["" + point + "Position"], leapHand.data('riggedHand.scale'));
+            }
+          }
         }
         if (scope.renderFn) {
           return scope.renderFn();
