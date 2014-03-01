@@ -2,24 +2,25 @@
 <head>
   <meta charset="utf-8">
   <title>Rigged hand</title>
-  <!--<link href="stylesheets/main.css" rel="stylesheet">-->
+
+  <style>
+    body{
+      margin: 0;
+    }
+  </style>
+
 </head>
 <body>
 
-<div id="threejs" style="border: none; position: fixed; top: 0; left: 0;"></div>
 
-
-
-
-<!--<script type="text/javascript" src="javascripts/lib/leap.js"></script>-->
-<script type="text/javascript" src="javascripts/lib/underscore.js"></script>
-<script type="text/javascript" src="javascripts/lib/leap-skeleton-integration.js"></script>
-<script type="text/javascript" src="javascripts/lib/leapjs-spy.js"></script>
-<script type="text/javascript" src="javascripts/leap.three.js"></script>
-<script src="javascripts/lib/typeface-0.15.js"></script>
 <script type="text/javascript" src="javascripts/lib/three.js"></script>
-<script src="javascripts/lib/helvetiker_regular.typeface.js"></script>
-<script type="text/javascript" src="javascripts/three-ext.js"></script>
+<!-- This is the integration branch of leapjs-skeleton, which includes plugin support -->
+<script type="text/javascript" src="javascripts/lib/leap-skeleton-integration.js"></script>
+<!-- This gives us the hand-hold and hand-entry plugins, which rigged-hand depends on -->
+<script type="text/javascript" src="javascripts/lib/leap-plugins-0.1.2.js"></script>
+<script type="text/javascript" src="javascripts/lib/leap.rigged-hand.js"></script>
 <script type="text/javascript" src="javascripts/main.js"></script>
+
+
 </body>
 </html>
