@@ -383,7 +383,7 @@ Leap.plugin 'riggedHand', (scope = {})->
       palm.worldUp.fromArray(leapHand.palmNormal).multiplyScalar(-1)
 
       # position mesh to palm
-      handMesh.position.fromLeap(leapHand.stabilizedPalmPosition, leapHand.data('riggedHand.scale'))
+      handMesh.position.fromLeap(leapHand.palmPosition, leapHand.data('riggedHand.scale'))
       handMesh.matrix.lookAt(palm.worldDirection, zeroVector, palm.up)
       # set worldQuaternion before using it to position fingers (threejs updates handMesh.quaternion, but only too late)
       palm.worldQuaternion.setFromRotationMatrix( handMesh.matrix )

@@ -346,7 +346,7 @@ var _sortBy = function (obj, iterator, context) {
         palm.worldDirection.fromArray(leapHand.direction);
         palm.up.fromArray(leapHand.palmNormal).multiplyScalar(-1);
         palm.worldUp.fromArray(leapHand.palmNormal).multiplyScalar(-1);
-        handMesh.position.fromLeap(leapHand.stabilizedPalmPosition, leapHand.data('riggedHand.scale'));
+        handMesh.position.fromLeap(leapHand.palmPosition, leapHand.data('riggedHand.scale'));
         handMesh.matrix.lookAt(palm.worldDirection, zeroVector, palm.up);
         palm.worldQuaternion.setFromRotationMatrix(handMesh.matrix);
         _ref1 = leapHand.fingers;
