@@ -3,7 +3,7 @@
   var initScene;
 
   initScene = function(element) {
-    var HEIGHT, WIDTH, axis, cameraPosition, cameraPositions, pointLight;
+    var HEIGHT, WIDTH, axis, pointLight;
     HEIGHT = window.innerHeight;
     WIDTH = window.innerWidth;
     window.scene = new THREE.Scene();
@@ -21,25 +21,11 @@
     pointLight.lookAt(new THREE.Vector3(0, 0, 0));
     scene.add(pointLight);
     window.camera = new THREE.PerspectiveCamera(90, WIDTH / HEIGHT, 1, 1000);
-    cameraPositions = {
-      back: [0, 0, -10],
-      front: [0, 3, 15],
-      rightSide: [25, 0, 0],
-      top: [0, 14, 0]
-    };
-    cameraPosition = 'front';
-    renderer.domElement.onclick = function() {
-      camera.position.fromArray(cameraPositions[cameraPosition]);
-      camera.lookAt(new THREE.Vector3(0, 0, 0));
-      if (cameraPosition === 'front') {
-        cameraPosition = 'back';
-      } else {
-        cameraPosition = 'front';
-      }
-      return renderer.render(scene, camera);
-    };
-    renderer.domElement.click();
-    return scene.add(camera);
+    camera.position.fromArray([0, 3, 15]);
+    camera.lookAt(new THREE.Vector3(0, 0, 0));
+    window.controls = new THREE.TrackballControls(camera);
+    scene.add(camera);
+    return renderer.render(scene, camera);
   };
 
   initScene(document.body);
@@ -47,7 +33,8 @@
   (new Leap.Controller).use('handHold').use('handEntry').use('riggedHand', {
     parent: scene,
     renderFn: function() {
-      return renderer.render(scene, camera);
+      renderer.render(scene, camera);
+      return controls.update();
     }
   }).connect();
 

@@ -1,4 +1,3 @@
-# todo: make this a
 initScene = (element)->
   HEIGHT = window.innerHeight
   WIDTH = window.innerWidth
@@ -29,23 +28,14 @@ initScene = (element)->
     1,
     1000
   )
-  cameraPositions = {
-    back: [0,0,-10]
-    front: [0,3,15]
-    rightSide: [25,0,0]
-    top: [0,14,0]
-  }
-  cameraPosition = 'front'
 
-  renderer.domElement.onclick = ->
-    camera.position.fromArray(cameraPositions[cameraPosition])
-    camera.lookAt(new THREE.Vector3(0, 0, 0))
-    if cameraPosition == 'front' then cameraPosition = 'back' else cameraPosition = 'front'
-    renderer.render(scene, camera)
-
-  renderer.domElement.click()
-
+  camera.position.fromArray([0,3,15])
+  camera.lookAt(new THREE.Vector3(0, 0, 0))
+  window.controls = new THREE.TrackballControls( camera )
   scene.add(camera)
+
+  renderer.render(scene, camera)
+
 
 initScene(document.body)
 
@@ -54,7 +44,9 @@ initScene(document.body)
   .use('handEntry')
   .use('riggedHand', {
     parent: scene
-    renderFn: ()-> renderer.render(scene, camera)
+    renderFn: ()->
+      renderer.render(scene, camera)
+      controls.update()
   })
   .connect()
 
