@@ -40,8 +40,7 @@
     renderFn: function() {
       renderer.render(scene, camera);
       return controls.update();
-    },
-    dotsMode: true
+    }
   }).connect();
 
 }).call(this);

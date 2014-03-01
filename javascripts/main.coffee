@@ -61,7 +61,7 @@ initScene(document.body)
 #    materialOptions: {
 #      wireframe: true
 #    }
-    dotsMode: true
+#    dotsMode: true
   })
   .connect()
 
