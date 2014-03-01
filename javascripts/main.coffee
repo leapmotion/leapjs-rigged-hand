@@ -1,3 +1,11 @@
+`// http://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
+function getParam(name) {
+    name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+    var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+        results = regex.exec(location.search);
+    return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+}`
+
 initScene = (element)->
   window.scene = new THREE.Scene()
 
@@ -48,8 +56,9 @@ initScene = (element)->
 
 initScene(document.body)
 
-(new Leap.Controller)
-  .use('handHold')
+
+controller = (new Leap.Controller)
+controller.use('handHold')
   .use('handEntry')
   .use('riggedHand', {
     parent: scene
@@ -58,10 +67,20 @@ initScene(document.body)
       renderer.render(scene, camera)
       controls.update()
 
-#    materialOptions: {
-#      wireframe: true
-#    }
-#    dotsMode: true
+    materialOptions: {
+      wireframe: getParam('wireframe')
+    }
+    # set ?dots=true in the URL to show raw joint positions
+    dotsMode: getParam('dots')
   })
   .connect()
+
+if getParam('spy')
+  $.get 'http://lm-007.herokuapp.com/record_json/brian', (data)->
+    spy = window.LeapUtils.record_controller(controller, 500)
+    spy.replay({
+      frames: data.frames,
+      loop: true,
+      play_same_frames: true
+    })
 
