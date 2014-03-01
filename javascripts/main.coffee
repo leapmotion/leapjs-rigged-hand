@@ -1,12 +1,10 @@
 initScene = (element)->
-  HEIGHT = window.innerHeight
-  WIDTH = window.innerWidth
   window.scene = new THREE.Scene()
 
   window.renderer = new THREE.WebGLRenderer(alpha: true)
   #renderer.setClearColor( 0x000000, 0) # for overlay on page
   renderer.setClearColor(0x000000, 1)
-  renderer.setSize(WIDTH, HEIGHT)
+  renderer.setSize(window.innerWidth, window.innerHeight)
   element.appendChild(renderer.domElement)
 
   axis = new THREE.AxisHelper(5)
@@ -24,7 +22,7 @@ initScene = (element)->
 
   window.camera = new THREE.PerspectiveCamera(
     90,
-    WIDTH / HEIGHT,
+    window.innerWidth / window.innerHeight,
     1,
     1000
   )
@@ -33,6 +31,17 @@ initScene = (element)->
   camera.lookAt(new THREE.Vector3(0, 0, 0))
   window.controls = new THREE.TrackballControls( camera )
   scene.add(camera)
+
+  window.addEventListener( 'resize', ->
+    camera.aspect = window.innerWidth / window.innerHeight
+    camera.updateProjectionMatrix()
+
+    renderer.setSize( window.innerWidth, window.innerHeight )
+
+    controls.handleResize()
+
+    renderer.render(scene, camera)
+  , false );
 
   renderer.render(scene, camera)
 
@@ -44,9 +53,14 @@ initScene(document.body)
   .use('handEntry')
   .use('riggedHand', {
     parent: scene
+
     renderFn: ()->
       renderer.render(scene, camera)
       controls.update()
+
+#    materialOptions: {
+#      wireframe: true
+#    }
   })
   .connect()
 
