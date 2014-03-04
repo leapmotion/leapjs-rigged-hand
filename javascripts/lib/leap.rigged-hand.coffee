@@ -363,48 +363,49 @@ Leap.plugin 'riggedHand', (scope = {})->
   )
 
   {
-    hand: (leapHand)->
-      # this works around a subtle bug where non-extended fingers would appear after extended ones
-      leapHand.fingers = _sortBy(leapHand.fingers, (finger)-> finger.id)
+    frame: (frame)->
+      for leapHand in frame.hands
+        # this works around a subtle bug where non-extended fingers would appear after extended ones
+        leapHand.fingers = _sortBy(leapHand.fingers, (finger)-> finger.id)
 
-      # convert Leap GL-Matrix Vectors to ThreeJS Vectors for later use
-      for finger in leapHand.fingers
-        finger.mcpPosition3 = (new THREE.Vector3).fromArray(finger.mcpPosition)
-        finger.pipPosition3 = (new THREE.Vector3).fromArray(finger.pipPosition)
-        finger.dipPosition3 = (new THREE.Vector3).fromArray(finger.dipPosition)
-        finger.tipPosition3 = (new THREE.Vector3).fromArray(finger.tipPosition)
+        # convert Leap GL-Matrix Vectors to ThreeJS Vectors for later use
+        for finger in leapHand.fingers
+          finger.mcpPosition3 = (new THREE.Vector3).fromArray(finger.mcpPosition)
+          finger.pipPosition3 = (new THREE.Vector3).fromArray(finger.pipPosition)
+          finger.dipPosition3 = (new THREE.Vector3).fromArray(finger.dipPosition)
+          finger.tipPosition3 = (new THREE.Vector3).fromArray(finger.tipPosition)
 
-      handMesh = leapHand.data('riggedHand.mesh')
-      palm = handMesh.children[0]
+        handMesh = leapHand.data('riggedHand.mesh')
+        palm = handMesh.children[0]
 
-      # set heading on palm so that finger.parent can access
-      palm.worldDirection.fromArray(leapHand.direction)
-      palm.up.fromArray(leapHand.palmNormal).multiplyScalar(-1)
-      palm.worldUp.fromArray(leapHand.palmNormal).multiplyScalar(-1)
+        # set heading on palm so that finger.parent can access
+        palm.worldDirection.fromArray(leapHand.direction)
+        palm.up.fromArray(leapHand.palmNormal).multiplyScalar(-1)
+        palm.worldUp.fromArray(leapHand.palmNormal).multiplyScalar(-1)
 
-      # position mesh to palm
-      handMesh.position.fromLeap(leapHand.palmPosition, leapHand.data('riggedHand.scale'))
-      handMesh.matrix.lookAt(palm.worldDirection, zeroVector, palm.up)
-      # set worldQuaternion before using it to position fingers (threejs updates handMesh.quaternion, but only too late)
-      palm.worldQuaternion.setFromRotationMatrix( handMesh.matrix )
+        # position mesh to palm
+        handMesh.position.fromLeap(leapHand.palmPosition, leapHand.data('riggedHand.scale'))
+        handMesh.matrix.lookAt(palm.worldDirection, zeroVector, palm.up)
+        # set worldQuaternion before using it to position fingers (threejs updates handMesh.quaternion, but only too late)
+        palm.worldQuaternion.setFromRotationMatrix( handMesh.matrix )
 
-      for leapFinger, i in leapHand.fingers
-        # wrist -> mcp -> pip -> dip -> tip
-        palm.children[i].    worldDirection.subVectors(leapFinger.pipPosition3, leapFinger.mcpPosition3).normalize()
-        palm.children[i].mip.worldDirection.subVectors(leapFinger.dipPosition3, leapFinger.pipPosition3).normalize()
-        palm.children[i].dip.worldDirection.subVectors(leapFinger.tipPosition3, leapFinger.dipPosition3).normalize()
+        for leapFinger, i in leapHand.fingers
+          # wrist -> mcp -> pip -> dip -> tip
+          palm.children[i].    worldDirection.subVectors(leapFinger.pipPosition3, leapFinger.mcpPosition3).normalize()
+          palm.children[i].mip.worldDirection.subVectors(leapFinger.dipPosition3, leapFinger.pipPosition3).normalize()
+          palm.children[i].dip.worldDirection.subVectors(leapFinger.tipPosition3, leapFinger.dipPosition3).normalize()
 
-        palm.children[i].    positionFromWorld(leapFinger.pipPosition3, leapFinger.mcpPosition3)
-        palm.children[i].mip.positionFromWorld(leapFinger.dipPosition3, leapFinger.pipPosition3)
-        palm.children[i].dip.positionFromWorld(leapFinger.tipPosition3, leapFinger.dipPosition3)
+          palm.children[i].    positionFromWorld(leapFinger.pipPosition3, leapFinger.mcpPosition3)
+          palm.children[i].mip.positionFromWorld(leapFinger.dipPosition3, leapFinger.pipPosition3)
+          palm.children[i].dip.positionFromWorld(leapFinger.tipPosition3, leapFinger.dipPosition3)
 
-        if scope.dotsMode
-          for point in ['mcp', 'pip', 'dip', 'tip']
-            unless dots["#{point}-#{i}"]
-              dots["#{point}-#{i}"] = basicDotMesh.clone()
-              scope.parent.add dots["#{point}-#{i}"]
+          if scope.dotsMode
+            for point in ['mcp', 'pip', 'dip', 'tip']
+              unless dots["#{point}-#{i}"]
+                dots["#{point}-#{i}"] = basicDotMesh.clone()
+                scope.parent.add dots["#{point}-#{i}"]
 
-            dots["#{point}-#{i}"].position.fromLeap(leapFinger["#{point}Position"], leapHand.data('riggedHand.scale'))
+              dots["#{point}-#{i}"].position.fromLeap(leapFinger["#{point}Position"], leapHand.data('riggedHand.scale'))
 
       scope.renderFn() if scope.renderFn
   }

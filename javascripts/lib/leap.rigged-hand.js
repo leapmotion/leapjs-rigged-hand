@@ -328,45 +328,49 @@ var _sortBy = function (obj, iterator, context) {
     dots = {};
     basicDotMesh = new THREE.Mesh(new THREE.IcosahedronGeometry(.3, 1), new THREE.MeshNormalMaterial());
     return {
-      hand: function(leapHand) {
-        var finger, handMesh, i, leapFinger, palm, point, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2;
-        leapHand.fingers = _sortBy(leapHand.fingers, function(finger) {
-          return finger.id;
-        });
-        _ref = leapHand.fingers;
+      frame: function(frame) {
+        var finger, handMesh, i, leapFinger, leapHand, palm, point, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _ref2, _ref3;
+        _ref = frame.hands;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          finger = _ref[_i];
-          finger.mcpPosition3 = (new THREE.Vector3).fromArray(finger.mcpPosition);
-          finger.pipPosition3 = (new THREE.Vector3).fromArray(finger.pipPosition);
-          finger.dipPosition3 = (new THREE.Vector3).fromArray(finger.dipPosition);
-          finger.tipPosition3 = (new THREE.Vector3).fromArray(finger.tipPosition);
-        }
-        handMesh = leapHand.data('riggedHand.mesh');
-        palm = handMesh.children[0];
-        palm.worldDirection.fromArray(leapHand.direction);
-        palm.up.fromArray(leapHand.palmNormal).multiplyScalar(-1);
-        palm.worldUp.fromArray(leapHand.palmNormal).multiplyScalar(-1);
-        handMesh.position.fromLeap(leapHand.palmPosition, leapHand.data('riggedHand.scale'));
-        handMesh.matrix.lookAt(palm.worldDirection, zeroVector, palm.up);
-        palm.worldQuaternion.setFromRotationMatrix(handMesh.matrix);
-        _ref1 = leapHand.fingers;
-        for (i = _j = 0, _len1 = _ref1.length; _j < _len1; i = ++_j) {
-          leapFinger = _ref1[i];
-          palm.children[i].worldDirection.subVectors(leapFinger.pipPosition3, leapFinger.mcpPosition3).normalize();
-          palm.children[i].mip.worldDirection.subVectors(leapFinger.dipPosition3, leapFinger.pipPosition3).normalize();
-          palm.children[i].dip.worldDirection.subVectors(leapFinger.tipPosition3, leapFinger.dipPosition3).normalize();
-          palm.children[i].positionFromWorld(leapFinger.pipPosition3, leapFinger.mcpPosition3);
-          palm.children[i].mip.positionFromWorld(leapFinger.dipPosition3, leapFinger.pipPosition3);
-          palm.children[i].dip.positionFromWorld(leapFinger.tipPosition3, leapFinger.dipPosition3);
-          if (scope.dotsMode) {
-            _ref2 = ['mcp', 'pip', 'dip', 'tip'];
-            for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
-              point = _ref2[_k];
-              if (!dots["" + point + "-" + i]) {
-                dots["" + point + "-" + i] = basicDotMesh.clone();
-                scope.parent.add(dots["" + point + "-" + i]);
+          leapHand = _ref[_i];
+          leapHand.fingers = _sortBy(leapHand.fingers, function(finger) {
+            return finger.id;
+          });
+          _ref1 = leapHand.fingers;
+          for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+            finger = _ref1[_j];
+            finger.mcpPosition3 = (new THREE.Vector3).fromArray(finger.mcpPosition);
+            finger.pipPosition3 = (new THREE.Vector3).fromArray(finger.pipPosition);
+            finger.dipPosition3 = (new THREE.Vector3).fromArray(finger.dipPosition);
+            finger.tipPosition3 = (new THREE.Vector3).fromArray(finger.tipPosition);
+          }
+          handMesh = leapHand.data('riggedHand.mesh');
+          palm = handMesh.children[0];
+          palm.worldDirection.fromArray(leapHand.direction);
+          palm.up.fromArray(leapHand.palmNormal).multiplyScalar(-1);
+          palm.worldUp.fromArray(leapHand.palmNormal).multiplyScalar(-1);
+          handMesh.position.fromLeap(leapHand.palmPosition, leapHand.data('riggedHand.scale'));
+          handMesh.matrix.lookAt(palm.worldDirection, zeroVector, palm.up);
+          palm.worldQuaternion.setFromRotationMatrix(handMesh.matrix);
+          _ref2 = leapHand.fingers;
+          for (i = _k = 0, _len2 = _ref2.length; _k < _len2; i = ++_k) {
+            leapFinger = _ref2[i];
+            palm.children[i].worldDirection.subVectors(leapFinger.pipPosition3, leapFinger.mcpPosition3).normalize();
+            palm.children[i].mip.worldDirection.subVectors(leapFinger.dipPosition3, leapFinger.pipPosition3).normalize();
+            palm.children[i].dip.worldDirection.subVectors(leapFinger.tipPosition3, leapFinger.dipPosition3).normalize();
+            palm.children[i].positionFromWorld(leapFinger.pipPosition3, leapFinger.mcpPosition3);
+            palm.children[i].mip.positionFromWorld(leapFinger.dipPosition3, leapFinger.pipPosition3);
+            palm.children[i].dip.positionFromWorld(leapFinger.tipPosition3, leapFinger.dipPosition3);
+            if (scope.dotsMode) {
+              _ref3 = ['mcp', 'pip', 'dip', 'tip'];
+              for (_l = 0, _len3 = _ref3.length; _l < _len3; _l++) {
+                point = _ref3[_l];
+                if (!dots["" + point + "-" + i]) {
+                  dots["" + point + "-" + i] = basicDotMesh.clone();
+                  scope.parent.add(dots["" + point + "-" + i]);
+                }
+                dots["" + point + "-" + i].position.fromLeap(leapFinger["" + point + "Position"], leapHand.data('riggedHand.scale'));
               }
-              dots["" + point + "-" + i].position.fromLeap(leapFinger["" + point + "Position"], leapHand.data('riggedHand.scale'));
             }
           }
         }
