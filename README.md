@@ -35,6 +35,7 @@ Automatically adds or removes hand meshes to/from the scene as they come in to o
   .connect()
 ```
 
+<br/>
 ```coffeescript
 # with options
 (new Leap.Controller)
@@ -42,24 +43,55 @@ Automatically adds or removes hand meshes to/from the scene as they come in to o
   .use('handEntry')
   .use('riggedHand', {
     parent: scene
+
     renderFn: ->
       renderer.render(scene, camera)
       # Here we update the camera controls for clicking and rotating
       controls.update()
+
     # These options are merged with the material options hash
     # Any valid Three.js material options are valid here.
     materialOptions: {
       wireframe: true
     }
     geometryOptions: {}
+
     # This will show pink dots at the raw position of every leap joint.
     # they will be slightly offset from the rig shape, due to it having slightly different proportions.
     dotsMode: true
+
+    # Sets the default position offset from the parent/scene. Default of new THREE.Vector3(0,-10,0)
+    offset: new THREE.Vector3(0,0,0)
+
+    # sets the scale of the mesh in the scene.  The default scale works with a camera of distance ~15.
+    scale: 1.5
+
+    # Allows hand movement to be scaled independently of hand size.
+    # With a value of 2, the hand will cover twice the distance on screen as it does in the world.
+    positionScale: 2
+
   })
   .connect()
 ```
 
+When a hand is on the screen, that hand will be available to your application through `leapHand.data('riggedHand.mesh')`.
+This will be the Three.js mesh, as is.
 
-## TODO:
+To get the css window coordinates of anything in leap-space, use the `handMesh.screenPosition` method, as seen in
+main.coffee.  Note that if your WebGL canvas doesn't take up the whole screen in a fixed position, you will need to
+add an offset. See [https://github.com/mrdoob/three.js/issues/78](https://github.com/mrdoob/three.js/issues/78).
 
-WIP Two more options: scale and offset. These would allow proper customization of the rigged hand within the scene.
+```coffeescript
+controller.on 'frame', (frame)->
+  if hand = frame.hands[0]
+    handMesh = frame.hands[0].data('riggedHand.mesh')
+    # to use screenPosition, we pass in any leap vector3 and the camera
+    screenPosition = handMesh.screenPosition(hand.fingers[1].tipPosition, camera)
+    cursor.style.left = screenPosition.x
+    cursor.style.bottom = screenPosition.y
+```
+
+## Contributing
+
+If you're receiving this as a zip and want to make changes, access issues, or get the latest code, contact
+pehrlich@leapmotion.com to be added to the github repo.

@@ -7,7 +7,7 @@ function getParam(name) {
         results = regex.exec(location.search);
     return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
 };
-  var controller, initScene;
+  var controller, cursor, initScene, stats;
 
   initScene = function(element) {
     var axis, pointLight;
@@ -42,7 +42,7 @@ function getParam(name) {
 
   initScene(document.body);
 
-  window.stats = new Stats();
+  stats = new Stats();
 
   stats.domElement.style.position = 'absolute';
 
@@ -54,8 +54,10 @@ function getParam(name) {
 
   controller = new Leap.Controller;
 
-  controller.use('handHold').use('handEntry').use('riggedHand', {
+  controller.use('handHold').use('handEntry').use('screenPosition').use('riggedHand', {
     parent: scene,
+    scale: getParam('scale'),
+    positionScale: getParam('positionScale'),
     renderFn: function() {
       renderer.render(scene, camera);
       return controls.update();
@@ -63,8 +65,33 @@ function getParam(name) {
     materialOptions: {
       wireframe: getParam('wireframe')
     },
-    dotsMode: getParam('dots')
+    dotsMode: getParam('dots'),
+    stats: stats
   }).connect();
+
+  if (getParam('screenPosition')) {
+    cursor = document.createElement('div');
+    cursor.style.width = '50px';
+    cursor.style.height = '50px';
+    cursor.style.position = 'absolute';
+    cursor.style.zIndex = '10';
+    cursor.style.backgroundColor = 'green';
+    cursor.style.opacity = '0.8';
+    cursor.style.color = 'white';
+    cursor.style.fontFamily = 'curior';
+    cursor.style.textAlign = 'center';
+    cursor.innerHTML = "&lt;div&gt;";
+    document.body.appendChild(cursor);
+    controller.on('frame', function(frame) {
+      var hand, handMesh, screenPosition;
+      if (hand = frame.hands[0]) {
+        handMesh = frame.hands[0].data('riggedHand.mesh');
+        screenPosition = handMesh.screenPosition(hand.fingers[1].tipPosition, camera);
+        cursor.style.left = screenPosition.x;
+        return cursor.style.bottom = screenPosition.y;
+      }
+    });
+  }
 
   if (getParam('spy')) {
     $.get('http://lm-007.herokuapp.com/record_json/brian', function(data) {

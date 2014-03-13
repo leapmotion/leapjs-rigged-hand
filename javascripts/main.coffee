@@ -56,7 +56,7 @@ initScene = (element)->
 
 initScene(document.body)
 
-window.stats = new Stats();
+stats = new Stats();
 
 stats.domElement.style.position = 'absolute';
 stats.domElement.style.left = '0px';
@@ -68,8 +68,11 @@ document.body.appendChild( stats.domElement );
 controller = (new Leap.Controller)
 controller.use('handHold')
   .use('handEntry')
+  .use('screenPosition')
   .use('riggedHand', {
     parent: scene
+    scale: getParam('scale') # a number, default of 1
+    positionScale: getParam('positionScale')  # a number, default of 1
 
     renderFn: ()->
       renderer.render(scene, camera)
@@ -80,8 +83,35 @@ controller.use('handHold')
     }
     # set ?dots=true in the URL to show raw joint positions
     dotsMode: getParam('dots')
+    stats: stats
   })
   .connect()
+
+
+if getParam('screenPosition')
+  cursor = document.createElement('div');
+  cursor.style.width = '50px'
+  cursor.style.height = '50px'
+  cursor.style.position = 'absolute'
+  cursor.style.zIndex = '10'
+
+  cursor.style.backgroundColor = 'green'
+  cursor.style.opacity = '0.8'
+  cursor.style.color = 'white'
+  cursor.style.fontFamily = 'curior'
+  cursor.style.textAlign = 'center'
+  cursor.innerHTML = "&lt;div&gt;"
+
+  document.body.appendChild(cursor)
+
+  controller.on 'frame', (frame)->
+    if hand = frame.hands[0]
+      handMesh = frame.hands[0].data('riggedHand.mesh')
+      # to use screenPosition, we pass in any leap vector3 and the camera
+      screenPosition = handMesh.screenPosition(hand.fingers[1].tipPosition, camera)
+      cursor.style.left = screenPosition.x
+      cursor.style.bottom = screenPosition.y
+
 
 if getParam('spy')
   $.get 'http://lm-007.herokuapp.com/record_json/brian', (data)->

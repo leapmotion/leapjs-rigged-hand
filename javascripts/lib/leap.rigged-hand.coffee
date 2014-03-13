@@ -240,14 +240,12 @@ camera = undefined
 
 # Creates the default ThreeJS scene if no parent passed in.
 initScene = (element)->
-  HEIGHT = window.innerHeight
-  WIDTH = window.innerWidth
   window.scene = new THREE.Scene()
 
   window.renderer = new THREE.WebGLRenderer(alpha: true)
   #renderer.setClearColor( 0x000000, 0) # for overlay on page
   renderer.setClearColor(0x000000, 1)
-  renderer.setSize(WIDTH, HEIGHT)
+  renderer.setSize(window.innerWidth, window.innerHeight)
   element.appendChild(renderer.domElement)
 
   axis = new THREE.AxisHelper(5)
@@ -263,72 +261,98 @@ initScene = (element)->
   pointLight.lookAt new THREE.Vector3(0, 0, 0)
   scene.add(pointLight)
 
-  window.camera = new THREE.PerspectiveCamera(
+  camera = new THREE.PerspectiveCamera(
     90,
-    WIDTH / HEIGHT,
+    window.innerWidth / window.innerHeight,
     1,
     1000
   )
-  cameraPositions = {
-    back: [0,0,-10]
-    front: [0,3,15]
-    rightSide: [25,0,0]
-    top: [0,14,0]
-  }
-  cameraPosition = 'front'
 
-  renderer.domElement.onclick = ->
-    camera.position.fromArray(cameraPositions[cameraPosition])
-    camera.lookAt(new THREE.Vector3(0, 0, 0))
-    if cameraPosition == 'front' then cameraPosition = 'back' else cameraPosition = 'front'
+  window.addEventListener( 'resize', ->
+    camera.aspect = window.innerWidth / window.innerHeight
+    camera.updateProjectionMatrix()
+
+    renderer.setSize( window.innerWidth, window.innerHeight )
+
     renderer.render(scene, camera)
-
-  renderer.domElement.click()
+  , false );
 
   scene.add(camera)
+  renderer.render(scene, camera)
 
 
 Leap.plugin 'riggedHand', (scope = {})->
   scope.offset ||= new THREE.Vector3(0,-10,0)
-  scope.scale ||= 1 # todo
+  scope.scale ||= 1
+  # this allow the hand to move disproportionately to its size.
+  scope.positionScale ||= 1
+
   unless scope.parent
     initScene(document.body)
     scope.parent = scene
     scope.renderFn = renderer.render(scene, camera)
 
 
+  projector = new THREE.Projector()
   # converts a ThreeJS JSON blob in to a mesh
   createMesh = (JSON)->
+    # note: this causes a good 90ms pause on first run
+    # it appears as if mesh.clone does not clone material and geometry, so at this point we refrain from doing so
+    # see THREE.SkinnedMesh.prototype.clone
+    # instead, we call createMesh right off, to have the results "cached"
     data = (new THREE.JSONLoader).parse JSON
     data.materials[0].skinning = true
     _extend(data.materials[0], scope.materialOptions)
     _extend(data.geometry,     scope.geometryOptions)
-    new THREE.SkinnedMesh(data.geometry, data.materials[0])
+    handMesh = new THREE.SkinnedMesh(data.geometry, data.materials[0])
+    handMesh.scale.multiplyScalar(scope.scale)
+    handMesh.positionRaw = new THREE.Vector3
+    handMesh.fingers = handMesh.children[0].children
 
-  THREE.Vector3.prototype.fromLeap = (array, scale)->
-    @fromArray(array).divideScalar(scale).add(scope.offset)
+    # takes in a vec3 of leap coordinates, and converts them in to screen position,
+    # based on the hand mesh position and camera position.
+    handMesh.screenPosition = (vec3, camera)->
+      screenPosition = (new THREE.Vector3()).fromLeap(vec3, @leapScale)
+        # the palm may have its base position scaled on top of leap coordinates!
+        .sub(@positionRaw)
+        .add(@position)
+      screenPosition = projector.projectVector(screenPosition, window.camera)
+      screenPosition.x = (screenPosition.x * window.innerWidth / 2) + window.innerWidth / 2
+      screenPosition.y = (screenPosition.y * window.innerHeight / 2) + window.innerHeight / 2
+      screenPosition
+
+    handMesh
+
+  # initialize JSONloader for speed
+  createMesh(rigs['right'])
+
+  unless THREE.Vector3.prototype.fromLeap
+    THREE.Vector3.prototype.fromLeap = (array, scale)->
+      @fromArray(array).divideScalar(scale).add(scope.offset)
 
   zeroVector = new THREE.Vector3(0,0,0)
 
-  @on 'handFound', (leapHand)->
-    # Create the mesh
-    mesh = createMesh(rigs[leapHand.type])
-    scope.parent.add mesh
-    leapHand.data('riggedHand.mesh', mesh)
-    palm = mesh.children[0]
 
-    # Scale
-    leapHand.data('riggedHand.scale',
+  @on 'handFound', (leapHand)->
+#    console.time 'hand found'
+    # Create the mesh
+    JSON = if scope.lowPoly then lowPolyRigs[leapHand.type] else rigs[leapHand.type]
+    handMesh = createMesh(JSON)
+    scope.parent.add handMesh
+    leapHand.data('riggedHand.mesh', handMesh)
+    palm = handMesh.children[0]
+
+    # Mesh scale set by comparing leap first bone length to mesh first bone length
+    handMesh.leapScale =
       (new THREE.Vector3).subVectors(
         (new THREE.Vector3).fromArray(leapHand.fingers[2].pipPosition)
         (new THREE.Vector3).fromArray(leapHand.fingers[2].mcpPosition)
-      ).length() / palm.children[2].position.length()
-    )
+      ).length() / handMesh.fingers[2].position.length() / scope.scale
 
     # Initialize Vectors for later use
     # actually we need the above so that position is factored in
     palm.worldUp = new THREE.Vector3
-    for rigFinger in palm.children
+    for rigFinger in handMesh.fingers
       rigFinger.mip = rigFinger.children[0]
       rigFinger.dip = rigFinger.children[0].children[0]
 
@@ -349,7 +373,9 @@ Leap.plugin 'riggedHand', (scope = {})->
       rigFinger.dip.worldUp         = new THREE.Vector3
 
     palm.worldDirection  = new THREE.Vector3
-    palm.worldQuaternion = mesh.quaternion
+    palm.worldQuaternion = handMesh.quaternion
+#    console.timeEnd 'hand found'
+
 
   @on 'handLost', (leapHand)->
     scope.parent.remove leapHand.data('riggedHand.mesh')
@@ -362,8 +388,10 @@ Leap.plugin 'riggedHand', (scope = {})->
     new THREE.MeshNormalMaterial()
   )
 
+
   {
     frame: (frame)->
+      scope.stats.begin() if scope.stats
       for leapHand in frame.hands
         # this works around a subtle bug where non-extended fingers would appear after extended ones
         leapHand.fingers = _sortBy(leapHand.fingers, (finger)-> finger.id)
@@ -384,20 +412,22 @@ Leap.plugin 'riggedHand', (scope = {})->
         palm.worldUp.fromArray(leapHand.palmNormal).multiplyScalar(-1)
 
         # position mesh to palm
-        handMesh.position.fromLeap(leapHand.palmPosition, leapHand.data('riggedHand.scale'))
+        handMesh.positionRaw.fromLeap(leapHand.palmPosition, handMesh.leapScale)
+        handMesh.position.copy(handMesh.positionRaw).multiplyScalar(scope.positionScale)
+
         handMesh.matrix.lookAt(palm.worldDirection, zeroVector, palm.up)
         # set worldQuaternion before using it to position fingers (threejs updates handMesh.quaternion, but only too late)
         palm.worldQuaternion.setFromRotationMatrix( handMesh.matrix )
 
         for leapFinger, i in leapHand.fingers
           # wrist -> mcp -> pip -> dip -> tip
-          palm.children[i].    worldDirection.subVectors(leapFinger.pipPosition3, leapFinger.mcpPosition3).normalize()
-          palm.children[i].mip.worldDirection.subVectors(leapFinger.dipPosition3, leapFinger.pipPosition3).normalize()
-          palm.children[i].dip.worldDirection.subVectors(leapFinger.tipPosition3, leapFinger.dipPosition3).normalize()
+          handMesh.fingers[i].    worldDirection.subVectors(leapFinger.pipPosition3, leapFinger.mcpPosition3).normalize()
+          handMesh.fingers[i].mip.worldDirection.subVectors(leapFinger.dipPosition3, leapFinger.pipPosition3).normalize()
+          handMesh.fingers[i].dip.worldDirection.subVectors(leapFinger.tipPosition3, leapFinger.dipPosition3).normalize()
 
-          palm.children[i].    positionFromWorld(leapFinger.pipPosition3, leapFinger.mcpPosition3)
-          palm.children[i].mip.positionFromWorld(leapFinger.dipPosition3, leapFinger.pipPosition3)
-          palm.children[i].dip.positionFromWorld(leapFinger.tipPosition3, leapFinger.dipPosition3)
+          handMesh.fingers[i].    positionFromWorld(leapFinger.pipPosition3, leapFinger.mcpPosition3)
+          handMesh.fingers[i].mip.positionFromWorld(leapFinger.dipPosition3, leapFinger.pipPosition3)
+          handMesh.fingers[i].dip.positionFromWorld(leapFinger.tipPosition3, leapFinger.dipPosition3)
 
           if scope.dotsMode
             for point in ['mcp', 'pip', 'dip', 'tip']
@@ -405,7 +435,11 @@ Leap.plugin 'riggedHand', (scope = {})->
                 dots["#{point}-#{i}"] = basicDotMesh.clone()
                 scope.parent.add dots["#{point}-#{i}"]
 
-              dots["#{point}-#{i}"].position.fromLeap(leapFinger["#{point}Position"], leapHand.data('riggedHand.scale'))
+              dots["#{point}-#{i}"].position.fromLeap(leapFinger["#{point}Position"], handMesh.leapScale)
+                .sub(handMesh.positionRaw)
+                .add(handMesh.position)
+
 
       scope.renderFn() if scope.renderFn
+      scope.stats.end() if scope.stats
   }
