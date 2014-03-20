@@ -240,16 +240,12 @@ camera = undefined
 
 # Creates the default ThreeJS scene if no parent passed in.
 initScene = (element)->
-  window.scene = new THREE.Scene()
+  scene = new THREE.Scene()
 
-  window.renderer = new THREE.WebGLRenderer(alpha: true)
-  #renderer.setClearColor( 0x000000, 0) # for overlay on page
-  renderer.setClearColor(0x000000, 1)
+  renderer = new THREE.WebGLRenderer(alpha: true)
+  renderer.setClearColor( 0x000000, 0 )
   renderer.setSize(window.innerWidth, window.innerHeight)
   element.appendChild(renderer.domElement)
-
-  axis = new THREE.AxisHelper(5)
-  scene.add axis
 
   scene.add new THREE.AmbientLight(0x888888)
   #directionalLight = new THREE.DirectionalLight(  0xffffff, 1 )
@@ -267,6 +263,8 @@ initScene = (element)->
     1,
     1000
   )
+  camera.position.fromArray([0,3,15])
+  camera.lookAt(new THREE.Vector3(0, 0, 0))
 
   window.addEventListener( 'resize', ->
     camera.aspect = window.innerWidth / window.innerHeight
@@ -290,7 +288,8 @@ Leap.plugin 'riggedHand', (scope = {})->
   unless scope.parent
     initScene(document.body)
     scope.parent = scene
-    scope.renderFn = renderer.render(scene, camera)
+    scope.renderFn = ->
+      renderer.render(scene, camera)
 
 
   projector = new THREE.Projector()

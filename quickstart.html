@@ -1,0 +1,32 @@
+<html>
+<!-- This Demo overlays a rigged hand on top of the existing page.  Requires a WebGL-capable browser. -->
+<head>
+  <script type="text/javascript" src="javascripts/lib/three.js"></script>
+  <script type="text/javascript" src="javascripts/lib/leap-skeleton-0.4.2.js"></script>
+  <script type="text/javascript" src="javascripts/lib/leap-plugins-0.1.3.js"></script>
+  <script type="text/javascript" src="javascripts/lib/leap.rigged-hand.js"></script>
+  <style>
+    canvas {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Rigged Hand - Quickstart</h1>
+
+<script>
+  (new Leap.Controller)
+    .use('handHold')
+    .use('handEntry')
+    .use('screenPosition')
+    .use('riggedHand')
+    .connect()
+</script>
+
+</body>
+</html>
