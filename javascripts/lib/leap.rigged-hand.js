@@ -194,7 +194,7 @@ var _sortBy = function (obj, iterator, context) {
     return left.index - right.index;
   }), 'value');
 };
-  var camera, initScene, renderer, scene;
+  var camera, initScene, renderer, scene, setColor;
 
   if (!THREE.Quaternion.prototype.setFromVectors) {
     THREE.Quaternion.prototype.setFromVectors = function(a, b) {
@@ -253,6 +253,38 @@ var _sortBy = function (obj, iterator, context) {
     return renderer.render(scene, camera);
   };
 
+  setColor = function(geometry) {
+    var boneColors, face, faceIndices, i, j, x, _i, _len, _ref, _results;
+    boneColors = {
+      0: 1,
+      4: 1,
+      6: 1
+    };
+    i = 0;
+    while (i < geometry.vertices.length) {
+      x = (boneColors[geometry.skinIndices[i].x] || 0) * geometry.skinWeights[i].x + (boneColors[geometry.skinIndices[i].y] || 0) * geometry.skinWeights[i].y;
+      geometry.colors.push((new THREE.Color()).setHSL(0.2, x, 0.5));
+      i++;
+    }
+    faceIndices = 'abc';
+    _ref = geometry.faces;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      face = _ref[_i];
+      j = 0;
+      _results.push((function() {
+        var _results1;
+        _results1 = [];
+        while (j < 3) {
+          face.vertexColors.push(geometry.colors[face[faceIndices[j]]]);
+          _results1.push(j++);
+        }
+        return _results1;
+      })());
+    }
+    return _results;
+  };
+
   Leap.plugin('riggedHand', function(scope) {
     var basicDotMesh, createMesh, dots, projector, zeroVector;
     if (scope == null) {
@@ -270,40 +302,37 @@ var _sortBy = function (obj, iterator, context) {
     }
     projector = new THREE.Projector();
     createMesh = function(JSON) {
-      var boneColors, data, face, faceIndices, handMesh, i, j, x, _i, _len, _ref;
+      var data, handMesh;
       data = (new THREE.JSONLoader).parse(JSON);
       data.materials[0].skinning = true;
       data.materials[0].transparent = true;
       data.materials[0].opacity = 0.7;
-      data.materials[0].vertexColors = THREE.VertexColors;
       data.materials[0].emissive.setHex(0x888888);
-      boneColors = {
-        0: 1,
-        4: 1,
-        6: 1
-      };
-      i = 0;
-      while (i < data.geometry.vertices.length) {
-        x = (boneColors[data.geometry.skinIndices[i].x] || 0) * data.geometry.skinWeights[i].x + (boneColors[data.geometry.skinIndices[i].y] || 0) * data.geometry.skinWeights[i].y;
-        data.geometry.colors.push((new THREE.Color()).setHSL(0.2, x, 0.5));
-        i++;
-      }
-      faceIndices = 'abc';
-      _ref = data.geometry.faces;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        face = _ref[_i];
-        j = 0;
-        while (j < 3) {
-          face.vertexColors.push(data.geometry.colors[face[faceIndices[j]]]);
-          j++;
-        }
-      }
+      data.materials[0].vertexColors = THREE.VertexColors;
+      setColor(data.geometry);
       _extend(data.materials[0], scope.materialOptions);
       _extend(data.geometry, scope.geometryOptions);
       handMesh = new THREE.SkinnedMesh(data.geometry, data.materials[0]);
       handMesh.scale.multiplyScalar(scope.scale);
       handMesh.positionRaw = new THREE.Vector3;
       handMesh.fingers = handMesh.children[0].children;
+      handMesh.boneLabels = {};
+      handMesh.labelBones = function(innerHTML, attribtues) {
+        if (attribtues == null) {
+          attribtues = {};
+        }
+        return handMesh.traverse(function(bone) {
+          var attribute, label, value, _base, _name, _results;
+          label = (_base = handMesh.boneLabels)[_name = bone.id] || (_base[_name] = document.createElement('div'));
+          label.innerHTML = innerHTML;
+          _results = [];
+          for (attribute in attribtues) {
+            value = attribtues[attribute];
+            _results.push(label.setAttribute(attribute, value));
+          }
+          return _results;
+        });
+      };
       handMesh.screenPosition = function(vec3, camera) {
         var screenPosition;
         screenPosition = (new THREE.Vector3()).fromLeap(vec3, this.leapScale).sub(this.positionRaw).add(this.position);
@@ -334,19 +363,20 @@ var _sortBy = function (obj, iterator, context) {
       _ref = handMesh.fingers;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         rigFinger = _ref[_i];
-        rigFinger.mip = rigFinger.children[0];
-        rigFinger.dip = rigFinger.children[0].children[0];
+        rigFinger.pip = rigFinger.children[0];
+        rigFinger.dip = rigFinger.pip.children[0];
+        rigFinger.tip = rigFinger.dip.children[0];
         rigFinger.worldQuaternion = new THREE.Quaternion;
-        rigFinger.mip.worldQuaternion = new THREE.Quaternion;
+        rigFinger.pip.worldQuaternion = new THREE.Quaternion;
         rigFinger.dip.worldQuaternion = new THREE.Quaternion;
         rigFinger.worldAxis = new THREE.Vector3;
-        rigFinger.mip.worldAxis = new THREE.Vector3;
+        rigFinger.pip.worldAxis = new THREE.Vector3;
         rigFinger.dip.worldAxis = new THREE.Vector3;
         rigFinger.worldDirection = new THREE.Vector3;
-        rigFinger.mip.worldDirection = new THREE.Vector3;
+        rigFinger.pip.worldDirection = new THREE.Vector3;
         rigFinger.dip.worldDirection = new THREE.Vector3;
         rigFinger.worldUp = new THREE.Vector3;
-        rigFinger.mip.worldUp = new THREE.Vector3;
+        rigFinger.pip.worldUp = new THREE.Vector3;
         rigFinger.dip.worldUp = new THREE.Vector3;
       }
       palm.worldDirection = new THREE.Vector3;
@@ -362,7 +392,7 @@ var _sortBy = function (obj, iterator, context) {
     basicDotMesh = new THREE.Mesh(new THREE.IcosahedronGeometry(.3, 1), new THREE.MeshNormalMaterial());
     return {
       frame: function(frame) {
-        var finger, handMesh, i, leapFinger, leapHand, palm, point, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _ref2, _ref3;
+        var handMesh, i, leapFinger, leapHand, mcp, palm, point, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _m, _ref, _ref1, _ref2, _ref3, _ref4;
         if (scope.stats) {
           scope.stats.begin();
         }
@@ -372,16 +402,16 @@ var _sortBy = function (obj, iterator, context) {
           leapHand.fingers = _sortBy(leapHand.fingers, function(finger) {
             return finger.id;
           });
-          _ref1 = leapHand.fingers;
-          for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-            finger = _ref1[_j];
-            finger.mcpPosition3 = (new THREE.Vector3).fromArray(finger.mcpPosition);
-            finger.pipPosition3 = (new THREE.Vector3).fromArray(finger.pipPosition);
-            finger.dipPosition3 = (new THREE.Vector3).fromArray(finger.dipPosition);
-            finger.tipPosition3 = (new THREE.Vector3).fromArray(finger.tipPosition);
-          }
           handMesh = leapHand.data('riggedHand.mesh');
           palm = handMesh.children[0];
+          _ref1 = palm.children;
+          for (i = _j = 0, _len1 = _ref1.length; _j < _len1; i = ++_j) {
+            mcp = _ref1[i];
+            mcp.positionLeap = (new THREE.Vector3).fromArray(leapHand.fingers[i].mcpPosition);
+            mcp.pip.positionLeap = (new THREE.Vector3).fromArray(leapHand.fingers[i].pipPosition);
+            mcp.dip.positionLeap = (new THREE.Vector3).fromArray(leapHand.fingers[i].dipPosition);
+            mcp.tip.positionLeap = (new THREE.Vector3).fromArray(leapHand.fingers[i].tipPosition);
+          }
           palm.worldDirection.fromArray(leapHand.direction);
           palm.up.fromArray(leapHand.palmNormal).multiplyScalar(-1);
           palm.worldUp.fromArray(leapHand.palmNormal).multiplyScalar(-1);
@@ -389,19 +419,23 @@ var _sortBy = function (obj, iterator, context) {
           handMesh.position.copy(handMesh.positionRaw).multiplyScalar(scope.positionScale);
           handMesh.matrix.lookAt(palm.worldDirection, zeroVector, palm.up);
           palm.worldQuaternion.setFromRotationMatrix(handMesh.matrix);
-          _ref2 = leapHand.fingers;
-          for (i = _k = 0, _len2 = _ref2.length; _k < _len2; i = ++_k) {
-            leapFinger = _ref2[i];
-            handMesh.fingers[i].worldDirection.subVectors(leapFinger.pipPosition3, leapFinger.mcpPosition3).normalize();
-            handMesh.fingers[i].mip.worldDirection.subVectors(leapFinger.dipPosition3, leapFinger.pipPosition3).normalize();
-            handMesh.fingers[i].dip.worldDirection.subVectors(leapFinger.tipPosition3, leapFinger.dipPosition3).normalize();
-            handMesh.fingers[i].positionFromWorld(leapFinger.pipPosition3, leapFinger.mcpPosition3);
-            handMesh.fingers[i].mip.positionFromWorld(leapFinger.dipPosition3, leapFinger.pipPosition3);
-            handMesh.fingers[i].dip.positionFromWorld(leapFinger.tipPosition3, leapFinger.dipPosition3);
-            if (scope.dotsMode) {
-              _ref3 = ['mcp', 'pip', 'dip', 'tip'];
-              for (_l = 0, _len3 = _ref3.length; _l < _len3; _l++) {
-                point = _ref3[_l];
+          _ref2 = palm.children;
+          for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+            mcp = _ref2[_k];
+            mcp.traverse(function(bone) {
+              if (bone.children[0]) {
+                bone.worldDirection.subVectors(bone.children[0].positionLeap, bone.positionLeap).normalize();
+                return bone.positionFromWorld(bone.children[0].positionLeap, bone.positionLeap);
+              }
+            });
+          }
+          if (scope.dotsMode) {
+            _ref3 = leapHand.fingers;
+            for (i = _l = 0, _len3 = _ref3.length; _l < _len3; i = ++_l) {
+              leapFinger = _ref3[i];
+              _ref4 = ['mcp', 'pip', 'dip', 'tip'];
+              for (_m = 0, _len4 = _ref4.length; _m < _len4; _m++) {
+                point = _ref4[_m];
                 if (!dots["" + point + "-" + i]) {
                   dots["" + point + "-" + i] = basicDotMesh.clone();
                   scope.parent.add(dots["" + point + "-" + i]);
