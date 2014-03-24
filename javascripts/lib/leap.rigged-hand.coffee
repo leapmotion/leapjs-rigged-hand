@@ -248,9 +248,6 @@ initScene = (element)->
   element.appendChild(renderer.domElement)
 
   scene.add new THREE.AmbientLight(0x888888)
-  #directionalLight = new THREE.DirectionalLight(  0xffffff, 1 )
-  #directionalLight.position.set( 10, -10, 10 );
-  #scene.add( directionalLight );
 
   pointLight = new THREE.PointLight(0xFFffff)
   pointLight.position = new THREE.Vector3(-20, 10, 0)
@@ -301,6 +298,36 @@ Leap.plugin 'riggedHand', (scope = {})->
     # instead, we call createMesh right off, to have the results "cached"
     data = (new THREE.JSONLoader).parse JSON
     data.materials[0].skinning = true
+    data.materials[0].transparent = true
+    data.materials[0].opacity = 0.7
+    data.materials[0].vertexColors = THREE.VertexColors
+
+    data.materials[0].emissive.setHex(0x888888)
+
+    # H.  S controlled by weights, Lightness constant.
+    boneColors = {
+      0: 1
+      4: 1
+      6: 1
+    }
+
+    i = 0
+    while i < data.geometry.vertices.length
+      x =
+        (boneColors[data.geometry.skinIndices[i].x] || 0 ) * data.geometry.skinWeights[i].x +
+        (boneColors[data.geometry.skinIndices[i].y] || 0 ) * data.geometry.skinWeights[i].y
+      data.geometry.colors.push((new THREE.Color()).setHSL(
+        0.2, x, 0.5
+      ))
+      i++
+
+    faceIndices = 'abc'
+    for face in data.geometry.faces
+      j = 0
+      while j < 3
+        face.vertexColors.push data.geometry.colors[face[faceIndices[j]]]
+        j++
+
     _extend(data.materials[0], scope.materialOptions)
     _extend(data.geometry,     scope.geometryOptions)
     handMesh = new THREE.SkinnedMesh(data.geometry, data.materials[0])
@@ -333,7 +360,7 @@ Leap.plugin 'riggedHand', (scope = {})->
 
 
   @on 'handFound', (leapHand)->
-#    console.time 'hand found'
+    console.time 'hand found'
     # Create the mesh
     JSON = if scope.lowPoly then lowPolyRigs[leapHand.type] else rigs[leapHand.type]
     handMesh = createMesh(JSON)

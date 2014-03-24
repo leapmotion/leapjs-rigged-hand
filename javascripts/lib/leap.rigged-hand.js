@@ -270,9 +270,34 @@ var _sortBy = function (obj, iterator, context) {
     }
     projector = new THREE.Projector();
     createMesh = function(JSON) {
-      var data, handMesh;
+      var boneColors, data, face, faceIndices, handMesh, i, j, x, _i, _len, _ref;
       data = (new THREE.JSONLoader).parse(JSON);
       data.materials[0].skinning = true;
+      data.materials[0].transparent = true;
+      data.materials[0].opacity = 0.7;
+      data.materials[0].vertexColors = THREE.VertexColors;
+      data.materials[0].emissive.setHex(0x888888);
+      boneColors = {
+        0: 1,
+        4: 1,
+        6: 1
+      };
+      i = 0;
+      while (i < data.geometry.vertices.length) {
+        x = (boneColors[data.geometry.skinIndices[i].x] || 0) * data.geometry.skinWeights[i].x + (boneColors[data.geometry.skinIndices[i].y] || 0) * data.geometry.skinWeights[i].y;
+        data.geometry.colors.push((new THREE.Color()).setHSL(0.2, x, 0.5));
+        i++;
+      }
+      faceIndices = 'abc';
+      _ref = data.geometry.faces;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        face = _ref[_i];
+        j = 0;
+        while (j < 3) {
+          face.vertexColors.push(data.geometry.colors[face[faceIndices[j]]]);
+          j++;
+        }
+      }
       _extend(data.materials[0], scope.materialOptions);
       _extend(data.geometry, scope.geometryOptions);
       handMesh = new THREE.SkinnedMesh(data.geometry, data.materials[0]);
@@ -298,6 +323,7 @@ var _sortBy = function (obj, iterator, context) {
     zeroVector = new THREE.Vector3(0, 0, 0);
     this.on('handFound', function(leapHand) {
       var JSON, handMesh, palm, rigFinger, _i, _len, _ref;
+      console.time('hand found');
       JSON = scope.lowPoly ? lowPolyRigs[leapHand.type] : rigs[leapHand.type];
       handMesh = createMesh(JSON);
       scope.parent.add(handMesh);
