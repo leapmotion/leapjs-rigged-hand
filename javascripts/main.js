@@ -52,7 +52,7 @@ function getParam(name) {
 
   document.body.appendChild(stats.domElement);
 
-  controller = new Leap.Controller;
+  window.controller = controller = new Leap.Controller;
 
   controller.use('handHold').use('handEntry').use('screenPosition').use('riggedHand', {
     parent: scene,
@@ -66,7 +66,11 @@ function getParam(name) {
       wireframe: getParam('wireframe')
     },
     dotsMode: getParam('dots'),
-    stats: stats
+    stats: stats,
+    camera: camera,
+    boneLabels: function(boneMesh, leapHand) {
+      return boneMesh.name;
+    }
   }).connect();
 
   if (getParam('screenPosition')) {

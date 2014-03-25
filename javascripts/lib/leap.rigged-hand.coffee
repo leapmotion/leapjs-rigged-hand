@@ -340,23 +340,39 @@ Leap.plugin 'riggedHand', (scope = {})->
     handMesh.fingers = handMesh.children[0].children
 
     handMesh.boneLabels = {}
-    handMesh.labelBones = (innerHTML, attribtues = {}) ->
+
+    if scope.boneLabels
       handMesh.traverse (bone)->
         label = handMesh.boneLabels[bone.id] ||= document.createElement('div')
-        label.innerHTML = innerHTML
-        for attribute, value of attribtues
-          label.setAttribute(attribute, value)
+        document.body.appendChild(label)
+        label.style.position = 'absolute'
+        label.style.zIndex = '10'
 
+        label.style.color = 'white'
+        label.style.fontSize = '20px'
+        label.style.textShadow = '0px 0px 3px black'
+        label.style.fontFamily = 'helvetica'
+        label.style.textAlign = 'center'
+
+        for attribute, value of scope.labelAttributes
+          label.setAttribute(attribute, value)
 
 
 
     # takes in a vec3 of leap coordinates, and converts them in to screen position,
     # based on the hand mesh position and camera position.
-    handMesh.screenPosition = (vec3, camera)->
-      screenPosition = (new THREE.Vector3()).fromLeap(vec3, @leapScale)
-        # the palm may have its base position scaled on top of leap coordinates!
-        .sub(@positionRaw)
-        .add(@position)
+    handMesh.screenPosition = (position, camera)->
+      throw 'No camera provided' unless camera
+      screenPosition = (new THREE.Vector3())
+
+      if position instanceof THREE.Vector3
+        screenPosition.fromLeap(position.toArray(), @leapScale)
+      else
+        screenPosition.fromLeap(position, @leapScale)
+          # the palm may have its base position scaled on top of leap coordinates:
+          .sub(@positionRaw)
+          .add(@position)
+
       screenPosition = projector.projectVector(screenPosition, window.camera)
       screenPosition.x = (screenPosition.x * window.innerWidth / 2) + window.innerWidth / 2
       screenPosition.y = (screenPosition.y * window.innerHeight / 2) + window.innerHeight / 2
@@ -393,6 +409,7 @@ Leap.plugin 'riggedHand', (scope = {})->
     # Initialize Vectors for later use
     # actually we need the above so that position is factored in
     palm.worldUp = new THREE.Vector3
+    palm.positionLeap = new THREE.Vector3
     for rigFinger in handMesh.fingers
       rigFinger.pip = rigFinger.children[0]
       rigFinger.dip = rigFinger.pip.children[0]
@@ -414,13 +431,25 @@ Leap.plugin 'riggedHand', (scope = {})->
       rigFinger.pip.worldUp         = new THREE.Vector3
       rigFinger.dip.worldUp         = new THREE.Vector3
 
+      rigFinger.    positionLeap   = new THREE.Vector3
+      rigFinger.pip.positionLeap   = new THREE.Vector3
+      rigFinger.dip.positionLeap   = new THREE.Vector3
+      rigFinger.tip.positionLeap   = new THREE.Vector3
+
     palm.worldDirection  = new THREE.Vector3
     palm.worldQuaternion = handMesh.quaternion
 #    console.timeEnd 'hand found'
 
 
   @on 'handLost', (leapHand)->
-    scope.parent.remove leapHand.data('riggedHand.mesh')
+    handMesh = leapHand.data('riggedHand.mesh')
+    scope.parent.remove handMesh
+
+    if scope.boneLabels
+      # start with palm
+      handMesh.children[0].traverse (bone)->
+        document.body.removeChild handMesh.boneLabels[bone.id]
+
     scope.renderFn() if scope.renderFn
 
   # for use when dotsMode = true
@@ -440,12 +469,13 @@ Leap.plugin 'riggedHand', (scope = {})->
         handMesh = leapHand.data('riggedHand.mesh')
         palm = handMesh.children[0]
 
+        palm.positionLeap.fromArray(leapHand.palmPosition)
         # wrist -> mcp -> pip -> dip -> tip
         for mcp, i in palm.children
-          mcp.    positionLeap = (new THREE.Vector3).fromArray(leapHand.fingers[i].mcpPosition)
-          mcp.pip.positionLeap = (new THREE.Vector3).fromArray(leapHand.fingers[i].pipPosition)
-          mcp.dip.positionLeap = (new THREE.Vector3).fromArray(leapHand.fingers[i].dipPosition)
-          mcp.tip.positionLeap = (new THREE.Vector3).fromArray(leapHand.fingers[i].tipPosition)
+          mcp.    positionLeap.fromArray(leapHand.fingers[i].mcpPosition)
+          mcp.pip.positionLeap.fromArray(leapHand.fingers[i].pipPosition)
+          mcp.dip.positionLeap.fromArray(leapHand.fingers[i].dipPosition)
+          mcp.tip.positionLeap.fromArray(leapHand.fingers[i].tipPosition)
 
 
         # set heading on palm so that finger.parent can access
@@ -478,9 +508,16 @@ Leap.plugin 'riggedHand', (scope = {})->
               dots["#{point}-#{i}"].position.fromLeap(leapFinger["#{point}Position"], handMesh.leapScale)
                 .sub(handMesh.positionRaw)
                 .add(handMesh.position)
-              
-#      handMesh.traverse()
 
+        if scope.boneLabels
+          handMesh.worldPosition.copy(handMesh.position)
+          palm.traverse (bone)->
+            # the condition here is necessary in case scope.boneLabels is set while a hand is in the frame
+            if element = handMesh.boneLabels[bone.id]
+              screenPosition = handMesh.screenPosition(bone.positionLeap, scope.camera)
+              element.style.left = screenPosition.x
+              element.style.bottom = screenPosition.y
+              element.innerHTML = scope.boneLabels(bone, leapHand)
 
       scope.renderFn() if scope.renderFn
       scope.stats.end() if scope.stats

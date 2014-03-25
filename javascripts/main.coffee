@@ -65,7 +65,7 @@ stats.domElement.style.top = '0px';
 document.body.appendChild( stats.domElement );
 
 
-controller = (new Leap.Controller)
+window.controller = controller = (new Leap.Controller)
 controller.use('handHold')
   .use('handEntry')
   .use('screenPosition')
@@ -84,6 +84,9 @@ controller.use('handHold')
     # set ?dots=true in the URL to show raw joint positions
     dotsMode: getParam('dots')
     stats: stats
+    camera: camera
+    boneLabels: (boneMesh, leapHand)->
+      boneMesh.name
   })
   .connect()
 

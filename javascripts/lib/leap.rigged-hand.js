@@ -317,25 +317,38 @@ var _sortBy = function (obj, iterator, context) {
       handMesh.positionRaw = new THREE.Vector3;
       handMesh.fingers = handMesh.children[0].children;
       handMesh.boneLabels = {};
-      handMesh.labelBones = function(innerHTML, attribtues) {
-        if (attribtues == null) {
-          attribtues = {};
-        }
-        return handMesh.traverse(function(bone) {
-          var attribute, label, value, _base, _name, _results;
+      if (scope.boneLabels) {
+        handMesh.traverse(function(bone) {
+          var attribute, label, value, _base, _name, _ref, _results;
           label = (_base = handMesh.boneLabels)[_name = bone.id] || (_base[_name] = document.createElement('div'));
-          label.innerHTML = innerHTML;
+          document.body.appendChild(label);
+          label.style.position = 'absolute';
+          label.style.zIndex = '10';
+          label.style.color = 'white';
+          label.style.fontSize = '20px';
+          label.style.textShadow = '0px 0px 3px black';
+          label.style.fontFamily = 'helvetica';
+          label.style.textAlign = 'center';
+          _ref = scope.labelAttributes;
           _results = [];
-          for (attribute in attribtues) {
-            value = attribtues[attribute];
+          for (attribute in _ref) {
+            value = _ref[attribute];
             _results.push(label.setAttribute(attribute, value));
           }
           return _results;
         });
-      };
-      handMesh.screenPosition = function(vec3, camera) {
+      }
+      handMesh.screenPosition = function(position, camera) {
         var screenPosition;
-        screenPosition = (new THREE.Vector3()).fromLeap(vec3, this.leapScale).sub(this.positionRaw).add(this.position);
+        if (!camera) {
+          throw 'No camera provided';
+        }
+        screenPosition = new THREE.Vector3();
+        if (position instanceof THREE.Vector3) {
+          screenPosition.fromLeap(position.toArray(), this.leapScale);
+        } else {
+          screenPosition.fromLeap(position, this.leapScale).sub(this.positionRaw).add(this.position);
+        }
         screenPosition = projector.projectVector(screenPosition, window.camera);
         screenPosition.x = (screenPosition.x * window.innerWidth / 2) + window.innerWidth / 2;
         screenPosition.y = (screenPosition.y * window.innerHeight / 2) + window.innerHeight / 2;
@@ -360,6 +373,7 @@ var _sortBy = function (obj, iterator, context) {
       palm = handMesh.children[0];
       handMesh.leapScale = (new THREE.Vector3).subVectors((new THREE.Vector3).fromArray(leapHand.fingers[2].pipPosition), (new THREE.Vector3).fromArray(leapHand.fingers[2].mcpPosition)).length() / handMesh.fingers[2].position.length() / scope.scale;
       palm.worldUp = new THREE.Vector3;
+      palm.positionLeap = new THREE.Vector3;
       _ref = handMesh.fingers;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         rigFinger = _ref[_i];
@@ -378,12 +392,23 @@ var _sortBy = function (obj, iterator, context) {
         rigFinger.worldUp = new THREE.Vector3;
         rigFinger.pip.worldUp = new THREE.Vector3;
         rigFinger.dip.worldUp = new THREE.Vector3;
+        rigFinger.positionLeap = new THREE.Vector3;
+        rigFinger.pip.positionLeap = new THREE.Vector3;
+        rigFinger.dip.positionLeap = new THREE.Vector3;
+        rigFinger.tip.positionLeap = new THREE.Vector3;
       }
       palm.worldDirection = new THREE.Vector3;
       return palm.worldQuaternion = handMesh.quaternion;
     });
     this.on('handLost', function(leapHand) {
-      scope.parent.remove(leapHand.data('riggedHand.mesh'));
+      var handMesh;
+      handMesh = leapHand.data('riggedHand.mesh');
+      scope.parent.remove(handMesh);
+      if (scope.boneLabels) {
+        handMesh.children[0].traverse(function(bone) {
+          return document.body.removeChild(handMesh.boneLabels[bone.id]);
+        });
+      }
       if (scope.renderFn) {
         return scope.renderFn();
       }
@@ -404,13 +429,14 @@ var _sortBy = function (obj, iterator, context) {
           });
           handMesh = leapHand.data('riggedHand.mesh');
           palm = handMesh.children[0];
+          palm.positionLeap.fromArray(leapHand.palmPosition);
           _ref1 = palm.children;
           for (i = _j = 0, _len1 = _ref1.length; _j < _len1; i = ++_j) {
             mcp = _ref1[i];
-            mcp.positionLeap = (new THREE.Vector3).fromArray(leapHand.fingers[i].mcpPosition);
-            mcp.pip.positionLeap = (new THREE.Vector3).fromArray(leapHand.fingers[i].pipPosition);
-            mcp.dip.positionLeap = (new THREE.Vector3).fromArray(leapHand.fingers[i].dipPosition);
-            mcp.tip.positionLeap = (new THREE.Vector3).fromArray(leapHand.fingers[i].tipPosition);
+            mcp.positionLeap.fromArray(leapHand.fingers[i].mcpPosition);
+            mcp.pip.positionLeap.fromArray(leapHand.fingers[i].pipPosition);
+            mcp.dip.positionLeap.fromArray(leapHand.fingers[i].dipPosition);
+            mcp.tip.positionLeap.fromArray(leapHand.fingers[i].tipPosition);
           }
           palm.worldDirection.fromArray(leapHand.direction);
           palm.up.fromArray(leapHand.palmNormal).multiplyScalar(-1);
@@ -443,6 +469,18 @@ var _sortBy = function (obj, iterator, context) {
                 dots["" + point + "-" + i].position.fromLeap(leapFinger["" + point + "Position"], handMesh.leapScale).sub(handMesh.positionRaw).add(handMesh.position);
               }
             }
+          }
+          if (scope.boneLabels) {
+            handMesh.worldPosition.copy(handMesh.position);
+            palm.traverse(function(bone) {
+              var element, screenPosition;
+              if (element = handMesh.boneLabels[bone.id]) {
+                screenPosition = handMesh.screenPosition(bone.positionLeap, scope.camera);
+                element.style.left = screenPosition.x;
+                element.style.bottom = screenPosition.y;
+                return element.innerHTML = scope.boneLabels(bone, leapHand);
+              }
+            });
           }
         }
         if (scope.renderFn) {
