@@ -276,32 +276,6 @@ initScene = (element)->
   renderer.render(scene, camera)
 
 
-setColor = (geometry)->
-  # H.  S controlled by weights, Lightness constant.
-  boneColors = {
-    0: 1
-    4: 1
-    6: 1
-  }
-
-  i = 0
-  while i < geometry.vertices.length
-    x =
-      (boneColors[geometry.skinIndices[i].x] || 0 ) * geometry.skinWeights[i].x +
-      (boneColors[geometry.skinIndices[i].y] || 0 ) * geometry.skinWeights[i].y
-    geometry.colors.push((new THREE.Color()).setHSL(
-      0.2, x, 0.5
-    ))
-    i++
-
-  faceIndices = 'abc'
-  for face in geometry.faces
-    j = 0
-    while j < 3
-      face.vertexColors.push geometry.colors[face[faceIndices[j]]]
-      j++
-
-
 
 Leap.plugin 'riggedHand', (scope = {})->
   scope.offset ||= new THREE.Vector3(0,-10,0)
@@ -330,7 +304,6 @@ Leap.plugin 'riggedHand', (scope = {})->
     data.materials[0].emissive.setHex(0x888888)
 
     data.materials[0].vertexColors = THREE.VertexColors
-    setColor(data.geometry)
 
     _extend(data.materials[0], scope.materialOptions)
     _extend(data.geometry,     scope.geometryOptions)
@@ -338,6 +311,14 @@ Leap.plugin 'riggedHand', (scope = {})->
     handMesh.scale.multiplyScalar(scope.scale)
     handMesh.positionRaw = new THREE.Vector3
     handMesh.fingers = handMesh.children[0].children
+
+    # Re-create the skin index on bones in a manner which will be accessible later
+    handMesh.bonesBySkinIndex = {}
+    i = 0
+    handMesh.children[0].traverse (bone)->
+      bone.skinIndex = i
+      handMesh.bonesBySkinIndex[i] = bone
+      i++
 
     handMesh.boneLabels = {}
 
@@ -356,7 +337,6 @@ Leap.plugin 'riggedHand', (scope = {})->
 
         for attribute, value of scope.labelAttributes
           label.setAttribute(attribute, value)
-
 
 
     # takes in a vec3 of leap coordinates, and converts them in to screen position,
@@ -510,14 +490,51 @@ Leap.plugin 'riggedHand', (scope = {})->
                 .add(handMesh.position)
 
         if scope.boneLabels
-          handMesh.worldPosition.copy(handMesh.position)
           palm.traverse (bone)->
             # the condition here is necessary in case scope.boneLabels is set while a hand is in the frame
             if element = handMesh.boneLabels[bone.id]
               screenPosition = handMesh.screenPosition(bone.positionLeap, scope.camera)
               element.style.left = screenPosition.x
               element.style.bottom = screenPosition.y
-              element.innerHTML = scope.boneLabels(bone, leapHand)
+              element.innerHTML = scope.boneLabels(bone, leapHand) || ''
+
+        if scope.boneColors
+          geometry = handMesh.geometry
+          # H.  S controlled by weights, Lightness constant.
+          boneColors = {}
+
+          i = 0
+          while i < geometry.vertices.length
+            # 0-index at palm id
+            # boneColors must return an array with [hue, saturation, lightness]
+            boneColors[geometry.skinIndices[i].x] ||= (scope.boneColors(handMesh.bonesBySkinIndex[geometry.skinIndices[i].x], leapHand) || [0,0])
+            boneColors[geometry.skinIndices[i].y] ||= (scope.boneColors(handMesh.bonesBySkinIndex[geometry.skinIndices[i].y], leapHand) || [0,0])
+            xBoneHSL = boneColors[geometry.skinIndices[i].x]
+            yBoneHSL = boneColors[geometry.skinIndices[i].y]
+            weights = geometry.skinWeights[i]
+
+            # the best way to do this would be additive blending of hue based upon weights
+            # currently, we just hue to whichever is set
+            hue = xBoneHSL[0] || yBoneHSL[0]
+
+            saturation =
+              (xBoneHSL[1]) * weights.x +
+              (yBoneHSL[1]) * weights.y
+
+
+            geometry.colors[i] ||= new THREE.Color()
+            geometry.colors[i].setHSL(hue, saturation, 0.5)
+            i++
+          geometry.colorsNeedUpdate = true
+
+          # copy vertex colors to the face
+          faceIndices = 'abc'
+          for face in geometry.faces
+            j = 0
+            while j < 3
+              face.vertexColors[j] = geometry.colors[face[faceIndices[j]]]
+              j++
+
 
       scope.renderFn() if scope.renderFn
       scope.stats.end() if scope.stats

@@ -69,7 +69,14 @@ function getParam(name) {
     stats: stats,
     camera: camera,
     boneLabels: function(boneMesh, leapHand) {
-      return boneMesh.name;
+      if (boneMesh.name.indexOf('Finger_03') === 0) {
+        return leapHand.pinchStrength;
+      }
+    },
+    boneColors: function(boneMesh, leapHand) {
+      if ((boneMesh.name.indexOf('Finger_0') === 0) || (boneMesh.name.indexOf('Finger_1') === 0)) {
+        return [0.6, leapHand.pinchStrength];
+      }
     }
   }).connect();
 

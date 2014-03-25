@@ -194,7 +194,7 @@ var _sortBy = function (obj, iterator, context) {
     return left.index - right.index;
   }), 'value');
 };
-  var camera, initScene, renderer, scene, setColor;
+  var camera, initScene, renderer, scene;
 
   if (!THREE.Quaternion.prototype.setFromVectors) {
     THREE.Quaternion.prototype.setFromVectors = function(a, b) {
@@ -253,38 +253,6 @@ var _sortBy = function (obj, iterator, context) {
     return renderer.render(scene, camera);
   };
 
-  setColor = function(geometry) {
-    var boneColors, face, faceIndices, i, j, x, _i, _len, _ref, _results;
-    boneColors = {
-      0: 1,
-      4: 1,
-      6: 1
-    };
-    i = 0;
-    while (i < geometry.vertices.length) {
-      x = (boneColors[geometry.skinIndices[i].x] || 0) * geometry.skinWeights[i].x + (boneColors[geometry.skinIndices[i].y] || 0) * geometry.skinWeights[i].y;
-      geometry.colors.push((new THREE.Color()).setHSL(0.2, x, 0.5));
-      i++;
-    }
-    faceIndices = 'abc';
-    _ref = geometry.faces;
-    _results = [];
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      face = _ref[_i];
-      j = 0;
-      _results.push((function() {
-        var _results1;
-        _results1 = [];
-        while (j < 3) {
-          face.vertexColors.push(geometry.colors[face[faceIndices[j]]]);
-          _results1.push(j++);
-        }
-        return _results1;
-      })());
-    }
-    return _results;
-  };
-
   Leap.plugin('riggedHand', function(scope) {
     var basicDotMesh, createMesh, dots, projector, zeroVector;
     if (scope == null) {
@@ -302,20 +270,26 @@ var _sortBy = function (obj, iterator, context) {
     }
     projector = new THREE.Projector();
     createMesh = function(JSON) {
-      var data, handMesh;
+      var data, handMesh, i;
       data = (new THREE.JSONLoader).parse(JSON);
       data.materials[0].skinning = true;
       data.materials[0].transparent = true;
       data.materials[0].opacity = 0.7;
       data.materials[0].emissive.setHex(0x888888);
       data.materials[0].vertexColors = THREE.VertexColors;
-      setColor(data.geometry);
       _extend(data.materials[0], scope.materialOptions);
       _extend(data.geometry, scope.geometryOptions);
       handMesh = new THREE.SkinnedMesh(data.geometry, data.materials[0]);
       handMesh.scale.multiplyScalar(scope.scale);
       handMesh.positionRaw = new THREE.Vector3;
       handMesh.fingers = handMesh.children[0].children;
+      handMesh.bonesBySkinIndex = {};
+      i = 0;
+      handMesh.children[0].traverse(function(bone) {
+        bone.skinIndex = i;
+        handMesh.bonesBySkinIndex[i] = bone;
+        return i++;
+      });
       handMesh.boneLabels = {};
       if (scope.boneLabels) {
         handMesh.traverse(function(bone) {
@@ -417,7 +391,7 @@ var _sortBy = function (obj, iterator, context) {
     basicDotMesh = new THREE.Mesh(new THREE.IcosahedronGeometry(.3, 1), new THREE.MeshNormalMaterial());
     return {
       frame: function(frame) {
-        var handMesh, i, leapFinger, leapHand, mcp, palm, point, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _m, _ref, _ref1, _ref2, _ref3, _ref4;
+        var boneColors, face, faceIndices, geometry, handMesh, hue, i, j, leapFinger, leapHand, mcp, palm, point, saturation, weights, xBoneHSL, yBoneHSL, _base, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _m, _n, _name, _name1, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
         if (scope.stats) {
           scope.stats.begin();
         }
@@ -471,16 +445,43 @@ var _sortBy = function (obj, iterator, context) {
             }
           }
           if (scope.boneLabels) {
-            handMesh.worldPosition.copy(handMesh.position);
             palm.traverse(function(bone) {
               var element, screenPosition;
               if (element = handMesh.boneLabels[bone.id]) {
                 screenPosition = handMesh.screenPosition(bone.positionLeap, scope.camera);
                 element.style.left = screenPosition.x;
                 element.style.bottom = screenPosition.y;
-                return element.innerHTML = scope.boneLabels(bone, leapHand);
+                return element.innerHTML = scope.boneLabels(bone, leapHand) || '';
               }
             });
+          }
+          if (scope.boneColors) {
+            geometry = handMesh.geometry;
+            boneColors = {};
+            i = 0;
+            while (i < geometry.vertices.length) {
+              boneColors[_name = geometry.skinIndices[i].x] || (boneColors[_name] = scope.boneColors(handMesh.bonesBySkinIndex[geometry.skinIndices[i].x], leapHand) || [0, 0]);
+              boneColors[_name1 = geometry.skinIndices[i].y] || (boneColors[_name1] = scope.boneColors(handMesh.bonesBySkinIndex[geometry.skinIndices[i].y], leapHand) || [0, 0]);
+              xBoneHSL = boneColors[geometry.skinIndices[i].x];
+              yBoneHSL = boneColors[geometry.skinIndices[i].y];
+              weights = geometry.skinWeights[i];
+              hue = xBoneHSL[0] || yBoneHSL[0];
+              saturation = xBoneHSL[1] * weights.x + yBoneHSL[1] * weights.y;
+              (_base = geometry.colors)[i] || (_base[i] = new THREE.Color());
+              geometry.colors[i].setHSL(hue, saturation, 0.5);
+              i++;
+            }
+            geometry.colorsNeedUpdate = true;
+            faceIndices = 'abc';
+            _ref5 = geometry.faces;
+            for (_n = 0, _len5 = _ref5.length; _n < _len5; _n++) {
+              face = _ref5[_n];
+              j = 0;
+              while (j < 3) {
+                face.vertexColors[j] = geometry.colors[face[faceIndices[j]]];
+                j++;
+              }
+            }
           }
         }
         if (scope.renderFn) {
