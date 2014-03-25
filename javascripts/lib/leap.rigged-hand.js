@@ -234,6 +234,11 @@ var _sortBy = function (obj, iterator, context) {
     });
     renderer.setClearColor(0x000000, 0);
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.domElement.style.position = 'fixed';
+    renderer.domElement.style.top = 0;
+    renderer.domElement.style.left = 0;
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
     element.appendChild(renderer.domElement);
     scene.add(new THREE.AmbientLight(0x888888));
     pointLight = new THREE.PointLight(0xFFffff);
