@@ -277,6 +277,7 @@ var _sortBy = function (obj, iterator, context) {
       data.materials[0].opacity = 0.7;
       data.materials[0].emissive.setHex(0x888888);
       data.materials[0].vertexColors = THREE.VertexColors;
+      data.materials[0].depthTest = false;
       _extend(data.materials[0], scope.materialOptions);
       _extend(data.geometry, scope.geometryOptions);
       handMesh = new THREE.SkinnedMesh(data.geometry, data.materials[0]);
