@@ -234,51 +234,48 @@ unless THREE.Quaternion.prototype.positionFromWorld
     @quaternion.copy(@parent.worldQuaternion).inverse().multiply(@worldQuaternion)
     @
 
-scene = undefined
-renderer = undefined
-camera = undefined
-
 # Creates the default ThreeJS scene if no parent passed in.
 initScene = (element)->
-  scene = new THREE.Scene()
+  scope = @
+  @scene = new THREE.Scene()
 
-  renderer = new THREE.WebGLRenderer(alpha: true)
-  renderer.setClearColor( 0x000000, 0 )
-  renderer.setSize(window.innerWidth, window.innerHeight)
-  renderer.domElement.style.position = 'fixed'
-  renderer.domElement.style.top = 0
-  renderer.domElement.style.left = 0
-  renderer.domElement.style.width = '100%'
-  renderer.domElement.style.height = '100%'
-  element.appendChild(renderer.domElement)
+  @renderer = new THREE.WebGLRenderer(alpha: true)
+  @renderer.setClearColor( 0x000000, 0 )
+  @renderer.setSize(window.innerWidth, window.innerHeight)
+  @renderer.domElement.style.position = 'fixed'
+  @renderer.domElement.style.top = 0
+  @renderer.domElement.style.left = 0
+  @renderer.domElement.style.width = '100%'
+  @renderer.domElement.style.height = '100%'
+  element.appendChild(@renderer.domElement)
 
-  scene.add new THREE.AmbientLight(0x888888)
+  @scene.add new THREE.AmbientLight(0x888888)
 
   pointLight = new THREE.PointLight(0xFFffff)
   pointLight.position = new THREE.Vector3(-20, 10, 0)
   pointLight.lookAt new THREE.Vector3(0, 0, 0)
-  scene.add(pointLight)
+  @scene.add(pointLight)
 
-  camera = new THREE.PerspectiveCamera(
+  @camera = new THREE.PerspectiveCamera(
     90,
     window.innerWidth / window.innerHeight,
     1,
     1000
   )
-  camera.position.fromArray([0,3,15])
-  camera.lookAt(new THREE.Vector3(0, 0, 0))
+  @camera.position.fromArray([0,3,15])
+  @camera.lookAt(new THREE.Vector3(0, 0, 0))
 
   window.addEventListener( 'resize', ->
-    camera.aspect = window.innerWidth / window.innerHeight
-    camera.updateProjectionMatrix()
+    scope.camera.aspect = window.innerWidth / window.innerHeight
+    scope.camera.updateProjectionMatrix()
 
-    renderer.setSize( window.innerWidth, window.innerHeight )
+    scope.renderer.setSize( window.innerWidth, window.innerHeight )
 
-    renderer.render(scene, camera)
-  , false );
+    scope.renderer.render(scope.scene, scope.camera)
+  , false )
 
-  scene.add(camera)
-  renderer.render(scene, camera)
+  scope.scene.add(scope.camera)
+  scope.renderer.render(scope.scene, scope.camera)
 
 
 
@@ -287,12 +284,13 @@ Leap.plugin 'riggedHand', (scope = {})->
   scope.scale ||= 1
   # this allow the hand to move disproportionately to its size.
   scope.positionScale ||= 1
+  scope.initScene = initScene
 
   unless scope.parent
-    initScene(document.body)
-    scope.parent = scene
+    scope.initScene(document.body)
+    scope.parent = scope.scene
     scope.renderFn = ->
-      renderer.render(scene, camera)
+      scope.renderer.render(scope.scene, scope.camera)
 
 
   projector = new THREE.Projector()
@@ -359,7 +357,7 @@ Leap.plugin 'riggedHand', (scope = {})->
           .sub(@positionRaw)
           .add(@position)
 
-      screenPosition = projector.projectVector(screenPosition, window.camera)
+      screenPosition = projector.projectVector(screenPosition, camera)
       screenPosition.x = (screenPosition.x * window.innerWidth / 2) + window.innerWidth / 2
       screenPosition.y = (screenPosition.y * window.innerHeight / 2) + window.innerHeight / 2
       screenPosition
@@ -377,7 +375,7 @@ Leap.plugin 'riggedHand', (scope = {})->
 
 
   @on 'handFound', (leapHand)->
-    console.time 'hand found'
+#    console.time 'hand found'
     # Create the mesh
     JSON = if scope.lowPoly then lowPolyRigs[leapHand.type] else rigs[leapHand.type]
     handMesh = createMesh(JSON)

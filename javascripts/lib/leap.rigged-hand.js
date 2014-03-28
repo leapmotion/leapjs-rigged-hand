@@ -194,7 +194,7 @@ var _sortBy = function (obj, iterator, context) {
     return left.index - right.index;
   }), 'value');
 };
-  var camera, initScene, renderer, scene;
+  var initScene;
 
   if (!THREE.Quaternion.prototype.setFromVectors) {
     THREE.Quaternion.prototype.setFromVectors = function(a, b) {
@@ -220,42 +220,37 @@ var _sortBy = function (obj, iterator, context) {
     };
   }
 
-  scene = void 0;
-
-  renderer = void 0;
-
-  camera = void 0;
-
   initScene = function(element) {
-    var pointLight;
-    scene = new THREE.Scene();
-    renderer = new THREE.WebGLRenderer({
+    var pointLight, scope;
+    scope = this;
+    this.scene = new THREE.Scene();
+    this.renderer = new THREE.WebGLRenderer({
       alpha: true
     });
-    renderer.setClearColor(0x000000, 0);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.domElement.style.position = 'fixed';
-    renderer.domElement.style.top = 0;
-    renderer.domElement.style.left = 0;
-    renderer.domElement.style.width = '100%';
-    renderer.domElement.style.height = '100%';
-    element.appendChild(renderer.domElement);
-    scene.add(new THREE.AmbientLight(0x888888));
+    this.renderer.setClearColor(0x000000, 0);
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.domElement.style.position = 'fixed';
+    this.renderer.domElement.style.top = 0;
+    this.renderer.domElement.style.left = 0;
+    this.renderer.domElement.style.width = '100%';
+    this.renderer.domElement.style.height = '100%';
+    element.appendChild(this.renderer.domElement);
+    this.scene.add(new THREE.AmbientLight(0x888888));
     pointLight = new THREE.PointLight(0xFFffff);
     pointLight.position = new THREE.Vector3(-20, 10, 0);
     pointLight.lookAt(new THREE.Vector3(0, 0, 0));
-    scene.add(pointLight);
-    camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 1000);
-    camera.position.fromArray([0, 3, 15]);
-    camera.lookAt(new THREE.Vector3(0, 0, 0));
+    this.scene.add(pointLight);
+    this.camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 1000);
+    this.camera.position.fromArray([0, 3, 15]);
+    this.camera.lookAt(new THREE.Vector3(0, 0, 0));
     window.addEventListener('resize', function() {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      return renderer.render(scene, camera);
+      scope.camera.aspect = window.innerWidth / window.innerHeight;
+      scope.camera.updateProjectionMatrix();
+      scope.renderer.setSize(window.innerWidth, window.innerHeight);
+      return scope.renderer.render(scope.scene, scope.camera);
     }, false);
-    scene.add(camera);
-    return renderer.render(scene, camera);
+    scope.scene.add(scope.camera);
+    return scope.renderer.render(scope.scene, scope.camera);
   };
 
   Leap.plugin('riggedHand', function(scope) {
@@ -266,11 +261,12 @@ var _sortBy = function (obj, iterator, context) {
     scope.offset || (scope.offset = new THREE.Vector3(0, -10, 0));
     scope.scale || (scope.scale = 1);
     scope.positionScale || (scope.positionScale = 1);
+    scope.initScene = initScene;
     if (!scope.parent) {
-      initScene(document.body);
-      scope.parent = scene;
+      scope.initScene(document.body);
+      scope.parent = scope.scene;
       scope.renderFn = function() {
-        return renderer.render(scene, camera);
+        return scope.renderer.render(scope.scene, scope.camera);
       };
     }
     projector = new THREE.Projector();
@@ -329,7 +325,7 @@ var _sortBy = function (obj, iterator, context) {
         } else {
           screenPosition.fromLeap(position, this.leapScale).sub(this.positionRaw).add(this.position);
         }
-        screenPosition = projector.projectVector(screenPosition, window.camera);
+        screenPosition = projector.projectVector(screenPosition, camera);
         screenPosition.x = (screenPosition.x * window.innerWidth / 2) + window.innerWidth / 2;
         screenPosition.y = (screenPosition.y * window.innerHeight / 2) + window.innerHeight / 2;
         return screenPosition;
@@ -345,7 +341,6 @@ var _sortBy = function (obj, iterator, context) {
     zeroVector = new THREE.Vector3(0, 0, 0);
     this.on('handFound', function(leapHand) {
       var JSON, handMesh, palm, rigFinger, _i, _len, _ref;
-      console.time('hand found');
       JSON = scope.lowPoly ? lowPolyRigs[leapHand.type] : rigs[leapHand.type];
       handMesh = createMesh(JSON);
       scope.parent.add(handMesh);
