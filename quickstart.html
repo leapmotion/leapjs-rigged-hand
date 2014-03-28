@@ -3,7 +3,8 @@
 <head>
   <script type="text/javascript" src="javascripts/lib/three.js"></script>
   <script type="text/javascript" src="javascripts/lib/leap-skeleton-master.js"></script>
-  <script type="text/javascript" src="javascripts/lib/leap-plugins-0.1.3.js"></script>
+  <!--<script type="text/javascript" src="javascripts/lib/leap-plugins-0.1.3.js"></script>-->
+  <script type="text/javascript" src="javascripts/lib/leap-plugins-0.1.3-versionCheck.js"></script>
   <script type="text/javascript" src="javascripts/lib/leap.rigged-hand.js"></script>
 </head>
 <body>
@@ -12,8 +13,6 @@
 
 <script>
   (new Leap.Controller)
-    .use('handHold')
-    .use('handEntry')
     .use('riggedHand')
     .connect()
 </script>

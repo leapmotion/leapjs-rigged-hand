@@ -258,6 +258,11 @@ var _sortBy = function (obj, iterator, context) {
     if (scope == null) {
       scope = {};
     }
+    this.use('handHold');
+    this.use('handEntry');
+    this.use('versionCheck', {
+      requiredProtocolVerion: 6
+    });
     scope.offset || (scope.offset = new THREE.Vector3(0, -10, 0));
     scope.scale || (scope.scale = 1);
     scope.positionScale || (scope.positionScale = 1);
