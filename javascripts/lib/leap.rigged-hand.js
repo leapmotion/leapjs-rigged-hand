@@ -466,13 +466,19 @@ var _sortBy = function (obj, iterator, context) {
             boneColors = {};
             i = 0;
             while (i < geometry.vertices.length) {
-              boneColors[_name = geometry.skinIndices[i].x] || (boneColors[_name] = scope.boneColors(handMesh.bonesBySkinIndex[geometry.skinIndices[i].x], leapHand) || [0, 0]);
-              boneColors[_name1 = geometry.skinIndices[i].y] || (boneColors[_name1] = scope.boneColors(handMesh.bonesBySkinIndex[geometry.skinIndices[i].y], leapHand) || [0, 0]);
+              boneColors[_name = geometry.skinIndices[i].x] || (boneColors[_name] = scope.boneColors(handMesh.bonesBySkinIndex[geometry.skinIndices[i].x], leapHand) || {
+                hue: 0,
+                saturation: 0
+              });
+              boneColors[_name1 = geometry.skinIndices[i].y] || (boneColors[_name1] = scope.boneColors(handMesh.bonesBySkinIndex[geometry.skinIndices[i].y], leapHand) || {
+                hue: 0,
+                saturation: 0
+              });
               xBoneHSL = boneColors[geometry.skinIndices[i].x];
               yBoneHSL = boneColors[geometry.skinIndices[i].y];
               weights = geometry.skinWeights[i];
-              hue = xBoneHSL[0] || yBoneHSL[0];
-              saturation = xBoneHSL[1] * weights.x + yBoneHSL[1] * weights.y;
+              hue = xBoneHSL.hue || yBoneHSL.hue;
+              saturation = xBoneHSL.saturation * weights.x + yBoneHSL.saturation * weights.y;
               (_base = geometry.colors)[i] || (_base[i] = new THREE.Color());
               geometry.colors[i].setHSL(hue, saturation, 0.5);
               i++;

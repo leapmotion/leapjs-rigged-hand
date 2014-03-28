@@ -75,7 +75,10 @@ function getParam(name) {
     },
     boneColors: function(boneMesh, leapHand) {
       if ((boneMesh.name.indexOf('Finger_0') === 0) || (boneMesh.name.indexOf('Finger_1') === 0)) {
-        return [0.6, leapHand.pinchStrength];
+        return {
+          hue: 0.6,
+          saturation: leapHand.pinchStrength
+        };
       }
     }
   }).connect();

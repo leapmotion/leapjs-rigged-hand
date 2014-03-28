@@ -441,7 +441,7 @@ Leap.plugin 'riggedHand', (scope = {})->
   # for use when dotsMode = true
   dots = {}
   basicDotMesh = new THREE.Mesh(
-    new THREE.IcosahedronGeometry( .3 , 1 ) ,
+    new THREE.IcosahedronGeometry( .3 , 1 ),
     new THREE.MeshNormalMaterial()
   )
 
@@ -513,19 +513,19 @@ Leap.plugin 'riggedHand', (scope = {})->
           while i < geometry.vertices.length
             # 0-index at palm id
             # boneColors must return an array with [hue, saturation, lightness]
-            boneColors[geometry.skinIndices[i].x] ||= (scope.boneColors(handMesh.bonesBySkinIndex[geometry.skinIndices[i].x], leapHand) || [0,0])
-            boneColors[geometry.skinIndices[i].y] ||= (scope.boneColors(handMesh.bonesBySkinIndex[geometry.skinIndices[i].y], leapHand) || [0,0])
+            boneColors[geometry.skinIndices[i].x] ||= (scope.boneColors(handMesh.bonesBySkinIndex[geometry.skinIndices[i].x], leapHand) || {hue: 0, saturation: 0})
+            boneColors[geometry.skinIndices[i].y] ||= (scope.boneColors(handMesh.bonesBySkinIndex[geometry.skinIndices[i].y], leapHand) || {hue: 0, saturation: 0})
             xBoneHSL = boneColors[geometry.skinIndices[i].x]
             yBoneHSL = boneColors[geometry.skinIndices[i].y]
             weights = geometry.skinWeights[i]
 
             # the best way to do this would be additive blending of hue based upon weights
             # currently, we just hue to whichever is set
-            hue = xBoneHSL[0] || yBoneHSL[0]
+            hue = xBoneHSL.hue || yBoneHSL.hue
 
             saturation =
-              (xBoneHSL[1]) * weights.x +
-              (yBoneHSL[1]) * weights.y
+              (xBoneHSL.saturation) * weights.x +
+              (yBoneHSL.saturation) * weights.y
 
 
             geometry.colors[i] ||= new THREE.Color()
