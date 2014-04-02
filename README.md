@@ -4,7 +4,7 @@ JS Rigged Hand Plugin
 This allows a Leap-Enabled hand to be added to any Three.JS scene.
 Requires LeapJS Skeletal 0.4.2 or greater with LeapJS-Plugins 0.1.3 or greater.
 
- - Live Demo: [http://leapmotion.github.io/rigged-hand/](http://leapmotion.github.io/rigged-hand/)
+ - Live Demo: [http://leapmotion.github.io/leapjs-rigged-hand/](http://leapmotion.github.io/leapjs-rigged-hand/)
  - If you don't have a Leap, automatic mode is available.  Ths JSON frame stream is almost 4mb, so give it a moment to load
  and then make sure you have the page in focus for playback. http://leapmotion.github.io/rigged-hand/?spy=1
 
