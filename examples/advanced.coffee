@@ -86,6 +86,7 @@ controller.use('handHold')
     stats: stats
     camera: camera
     boneLabels: (boneMesh, leapHand)->
+#      return boneMesh.name
       if boneMesh.name.indexOf('Finger_03') == 0
         leapHand.pinchStrength
     boneColors: (boneMesh, leapHand)->

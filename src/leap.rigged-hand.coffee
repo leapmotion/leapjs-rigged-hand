@@ -524,6 +524,7 @@ Leap.plugin 'riggedHand', (scope = {})->
             # the best way to do this would be additive blending of hue based upon weights
             # currently, we just hue to whichever is set
             hue = xBoneHSL.hue || yBoneHSL.hue
+            lightness = xBoneHSL.lightness || yBoneHSL.lightness || 0.5
 
             saturation =
               (xBoneHSL.saturation) * weights.x +
@@ -531,7 +532,7 @@ Leap.plugin 'riggedHand', (scope = {})->
 
 
             geometry.colors[i] ||= new THREE.Color()
-            geometry.colors[i].setHSL(hue, saturation, 0.5)
+            geometry.colors[i].setHSL(hue, saturation, lightness)
             i++
           geometry.colorsNeedUpdate = true
 
