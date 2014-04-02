@@ -502,8 +502,8 @@ Leap.plugin 'riggedHand', (scope = {})->
             # the condition here is necessary in case scope.boneLabels is set while a hand is in the frame
             if element = handMesh.boneLabels[bone.id]
               screenPosition = handMesh.screenPosition(bone.positionLeap, scope.camera)
-              element.style.left = screenPosition.x
-              element.style.bottom = screenPosition.y
+              element.style.left = "#{screenPosition.x}px"
+              element.style.bottom = "#{screenPosition.y}px"
               element.innerHTML = scope.boneLabels(bone, leapHand) || ''
 
         if scope.boneColors

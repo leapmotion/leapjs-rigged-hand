@@ -474,8 +474,8 @@ var _sortBy = function (obj, iterator, context) {
               var element, screenPosition;
               if (element = handMesh.boneLabels[bone.id]) {
                 screenPosition = handMesh.screenPosition(bone.positionLeap, scope.camera);
-                element.style.left = screenPosition.x;
-                element.style.bottom = screenPosition.y;
+                element.style.left = "" + screenPosition.x + "px";
+                element.style.bottom = "" + screenPosition.y + "px";
                 return element.innerHTML = scope.boneLabels(bone, leapHand) || '';
               }
             });
