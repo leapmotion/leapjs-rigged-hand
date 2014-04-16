@@ -282,7 +282,7 @@ initScene = (element)->
 Leap.plugin 'riggedHand', (scope = {})->
   @use('handHold')
   @use('handEntry')
-  @use('versionCheck', {requiredProtocolVerion: 6})
+  @use('versionCheck', {requiredProtocolVersion: 6})
 
   scope.offset ||= new THREE.Vector3(0,-10,0)
   scope.scale ||= 1
