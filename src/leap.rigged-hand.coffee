@@ -212,7 +212,7 @@ unless THREE.Quaternion.prototype.setFromVectors
     @normalize()
     @
 
-unless THREE.Quaternion.prototype.positionFromWorld
+unless THREE.Bone.prototype.positionFromWorld
   THREE.Bone.prototype.positionFromWorld = (eye, target) ->
     directionDotParentDirection = @worldDirection.dot(@parent.worldDirection)
     angle = Math.acos directionDotParentDirection
