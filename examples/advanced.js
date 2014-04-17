@@ -106,15 +106,11 @@ function getParam(name) {
     });
   }
 
-  if (getParam('spy')) {
-    $.get('http://lm-007.herokuapp.com/record_json/brian', function(data) {
-      var spy;
-      spy = window.LeapUtils.record_controller(controller, 500);
-      return spy.replay({
-        frames: data.frames,
-        loop: true,
-        play_same_frames: true
-      });
+  if (getParam('playback')) {
+    controller.use('playback', {
+      recording: 'examples/confidence2-49fps.json.lz',
+      autoPlay: true,
+      pauseOnHand: true
     });
   }
 
