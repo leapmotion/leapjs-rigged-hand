@@ -25,8 +25,6 @@ function getParam(name) {
     pointLight.lookAt(new THREE.Vector3(0, 0, 0));
     scene.add(pointLight);
     window.camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 1000);
-    window.sphere = new THREE.Mesh(new THREE.SphereGeometry(1), new THREE.MeshBasicMaterial(0x0000ff));
-    scene.add(sphere);
     camera.position.fromArray([0, 3, 15]);
     camera.lookAt(new THREE.Vector3(0, 0, 0));
     window.controls = new THREE.TrackballControls(camera);
@@ -110,6 +108,8 @@ function getParam(name) {
   }
 
   if (getParam('scenePosition')) {
+    window.sphere = new THREE.Mesh(new THREE.SphereGeometry(1), new THREE.MeshBasicMaterial(0x0000ff));
+    scene.add(sphere);
     controller.on('frame', function(frame) {
       var hand, handMesh;
       if (hand = frame.hands[0]) {

@@ -36,12 +36,6 @@ initScene = (element)->
   )
 
 
-  window.sphere = new THREE.Mesh(
-    new THREE.SphereGeometry(1),
-    new THREE.MeshBasicMaterial(0x0000ff)
-  )
-  scene.add(sphere)
-
   camera.position.fromArray([0,3,15])
   camera.lookAt(new THREE.Vector3(0, 0, 0))
   window.controls = new THREE.TrackballControls( camera )
@@ -133,6 +127,13 @@ if getParam('screenPosition')
       cursor.style.bottom = screenPosition.y
 
 if getParam('scenePosition')
+
+  window.sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(1),
+    new THREE.MeshBasicMaterial(0x0000ff)
+  )
+  scene.add(sphere)
+
   controller.on 'frame', (frame)->
     if hand = frame.hands[0]
       handMesh = frame.hands[0].data('riggedHand.mesh')
