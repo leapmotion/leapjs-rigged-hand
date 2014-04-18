@@ -84,6 +84,30 @@ Automatically adds or removes hand meshes to/from the scene as they come in to o
   .connect()
 ```
 
+### Scene Position
+
+`handMesh.scenePosition(leapPosition, scenePosition)` can be used to convert coordinates from Leap Space to THREE scene space.
+leapPosition should be an array [x,y,z] as found on Leap frames, scenePosition should be a `THREE.Vector3` which will be edited in-place.
+
+[LIVE DEMO](http://leapmotion.github.io/leapjs-rigged-hand/?scenePosition=true)
+
+
+```coffeescript
+sphere = new THREE.Mesh(
+  new THREE.SphereGeometry(1),
+  new THREE.MeshBasicMaterial(0x0000ff)
+)
+scene.add(sphere)
+
+controller.on 'frame', (frame)->
+  if hand = frame.hands[0]
+    handMesh = frame.hands[0].data('riggedHand.mesh')
+
+    handMesh.scenePosition(hand.indexFinger.tipPosition, sphere.position)
+
+```
+
+
 ### Screen Position
 
 When a hand is on the screen, that hand will be available to your application (such as in a plugin or on 'frame' callback)

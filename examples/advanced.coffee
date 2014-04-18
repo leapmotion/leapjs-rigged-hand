@@ -35,6 +35,13 @@ initScene = (element)->
     1000
   )
 
+
+  window.sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(1),
+    new THREE.MeshBasicMaterial(0x0000ff)
+  )
+  scene.add(sphere)
+
   camera.position.fromArray([0,3,15])
   camera.lookAt(new THREE.Vector3(0, 0, 0))
   window.controls = new THREE.TrackballControls( camera )
@@ -73,6 +80,8 @@ controller.use('handHold')
     parent: scene
     scale: getParam('scale') # a number, default of 1
     positionScale: getParam('positionScale')  # a number, default of 1
+
+    offset: new THREE.Vector3(0,0,0)
 
     renderFn: ()->
       renderer.render(scene, camera)
@@ -122,6 +131,12 @@ if getParam('screenPosition')
       screenPosition = handMesh.screenPosition(hand.fingers[1].tipPosition, camera)
       cursor.style.left = screenPosition.x
       cursor.style.bottom = screenPosition.y
+
+if getParam('scenePosition')
+  controller.on 'frame', (frame)->
+    if hand = frame.hands[0]
+      handMesh = frame.hands[0].data('riggedHand.mesh')
+      handMesh.scenePosition(hand.indexFinger.tipPosition, sphere.position)
 
 
 if getParam('playback')

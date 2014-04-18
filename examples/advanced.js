@@ -25,6 +25,8 @@ function getParam(name) {
     pointLight.lookAt(new THREE.Vector3(0, 0, 0));
     scene.add(pointLight);
     window.camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 1000);
+    window.sphere = new THREE.Mesh(new THREE.SphereGeometry(1), new THREE.MeshBasicMaterial(0x0000ff));
+    scene.add(sphere);
     camera.position.fromArray([0, 3, 15]);
     camera.lookAt(new THREE.Vector3(0, 0, 0));
     window.controls = new THREE.TrackballControls(camera);
@@ -57,6 +59,7 @@ function getParam(name) {
     parent: scene,
     scale: getParam('scale'),
     positionScale: getParam('positionScale'),
+    offset: new THREE.Vector3(0, 0, 0),
     renderFn: function() {
       renderer.render(scene, camera);
       return controls.update();
@@ -102,6 +105,16 @@ function getParam(name) {
         screenPosition = handMesh.screenPosition(hand.fingers[1].tipPosition, camera);
         cursor.style.left = screenPosition.x;
         return cursor.style.bottom = screenPosition.y;
+      }
+    });
+  }
+
+  if (getParam('scenePosition')) {
+    controller.on('frame', function(frame) {
+      var hand, handMesh;
+      if (hand = frame.hands[0]) {
+        handMesh = frame.hands[0].data('riggedHand.mesh');
+        return handMesh.scenePosition(hand.indexFinger.tipPosition, sphere.position);
       }
     });
   }

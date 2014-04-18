@@ -1,5 +1,5 @@
 /*                    
- * LeapJS Rigged Hand - v0.1.0 - 2014-04-17                    
+ * LeapJS Rigged Hand - v0.1.0 - 2014-04-18                    
  * http://github.com/leapmotion/leapjs-rigged-hand/                    
  *                    
  * Copyright 2014 LeapMotion, Inc                    
@@ -354,6 +354,9 @@ var _sortBy = function (obj, iterator, context) {
         screenPosition.y = (screenPosition.y * window.innerHeight / 2) + window.innerHeight / 2;
         return screenPosition;
       };
+      handMesh.scenePosition = function(leapPosition, scenePosition) {
+        return scenePosition.fromLeap(leapPosition, handMesh.leapScale).sub(handMesh.positionRaw).add(handMesh.position);
+      };
       return handMesh;
     };
     createMesh(rigs['right']);
@@ -465,7 +468,7 @@ var _sortBy = function (obj, iterator, context) {
                   dots["" + point + "-" + i] = basicDotMesh.clone();
                   scope.parent.add(dots["" + point + "-" + i]);
                 }
-                dots["" + point + "-" + i].position.fromLeap(leapFinger["" + point + "Position"], handMesh.leapScale).sub(handMesh.positionRaw).add(handMesh.position);
+                handMesh.scenePosition(leapFinger["" + point + "Position"], dots["" + point + "-" + i].position);
               }
             }
           }

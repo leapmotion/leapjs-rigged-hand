@@ -366,7 +366,15 @@ Leap.plugin 'riggedHand', (scope = {})->
       screenPosition.y = (screenPosition.y * window.innerHeight / 2) + window.innerHeight / 2
       screenPosition
 
+    handMesh.scenePosition = (leapPosition, scenePosition) ->
+      scenePosition.fromLeap(leapPosition, handMesh.leapScale)
+        # these two add the base offset
+        .sub(handMesh.positionRaw)
+        .add(handMesh.position)
+
     handMesh
+
+
 
   # initialize JSONloader for speed
   createMesh(rigs['right'])
@@ -493,9 +501,8 @@ Leap.plugin 'riggedHand', (scope = {})->
                 dots["#{point}-#{i}"] = basicDotMesh.clone()
                 scope.parent.add dots["#{point}-#{i}"]
 
-              dots["#{point}-#{i}"].position.fromLeap(leapFinger["#{point}Position"], handMesh.leapScale)
-                .sub(handMesh.positionRaw)
-                .add(handMesh.position)
+              handMesh.scenePosition(leapFinger["#{point}Position"], dots["#{point}-#{i}"].position)
+
 
         if scope.boneLabels
           palm.traverse (bone)->
