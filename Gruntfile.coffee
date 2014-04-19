@@ -4,6 +4,36 @@ module.exports = (grunt) ->
 
   grunt.initConfig
     pkg: grunt.file.readJSON("package.json")
+    # note that for performance, watch does not minify. be sure to do so before shipping.
+    watch: {
+      options: {
+        livereload: true
+      }
+      coffee: {
+        files: ['src/*.coffee', 'examples/*.coffee'],
+        tasks: ['default-no-uglify'],
+        options: {
+          spawn: false,
+          livereload: true
+        },
+      },
+      js: {
+        files: ['src/models/*.js'],
+        tasks: ['default-no-uglify'],
+        options: {
+          spawn: false,
+          livereload: true
+        },
+      },
+      html: {
+        files: ['./*.html'],
+        tasks: [],
+        options: {
+          spawn: false,
+          livereload: true
+        },
+      },
+    },
     coffee:
       build:
         files: [{
@@ -22,6 +52,16 @@ module.exports = (grunt) ->
           rename: (task, path, options)->
             task + path.replace('.coffee', '.js')
         }]
+    concat: {
+      build: {
+        src: ['src/models/*.js', 'build/' + filename + '.js'],
+        dest: 'build/' + filename + '.js'
+        options: {
+          banner: ";(function( window, undefined ){\n\n",
+          footer: "\n}( window ));"
+        }
+      }
+    }
     'string-replace': {
       build: {
         files: {
@@ -78,9 +118,17 @@ module.exports = (grunt) ->
 
   require('load-grunt-tasks')(grunt);
 
+  grunt.registerTask('default-no-uglify', [
+    'clean',
+    'coffee',
+    'concat',
+    'string-replace'
+  ]);
+
   grunt.registerTask('default', [
     'clean',
     'coffee',
+    'concat',
     'string-replace',
     'uglify',
     'usebanner'
