@@ -57,7 +57,9 @@ function getParam(name) {
     parent: scene,
     scale: getParam('scale'),
     positionScale: getParam('positionScale'),
-    offset: new THREE.Vector3(0, 0, 0),
+    offset: function(leapHand) {
+      return new THREE.Vector3(0, Math.sin((new Date).getTime() / 1000 * 3), 0);
+    },
     renderFn: function() {
       renderer.render(scene, camera);
       return controls.update();

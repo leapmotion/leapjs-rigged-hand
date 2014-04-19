@@ -75,7 +75,10 @@ controller.use('handHold')
     scale: getParam('scale') # a number, default of 1
     positionScale: getParam('positionScale')  # a number, default of 1
 
-    offset: new THREE.Vector3(0,0,0)
+    # This allows individual hand offsets
+    offset: (leapHand)->
+      # create a "breathing" effect..
+      new THREE.Vector3(0, Math.sin( (new Date).getTime() / 1000 * 3), 0)
 
     renderFn: ()->
       renderer.render(scene, camera)
