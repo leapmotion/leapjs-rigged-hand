@@ -53,12 +53,18 @@ function getParam(name) {
 
   window.controller = controller = new Leap.Controller;
 
-  controller.use('handHold').use('handEntry').use('screenPosition').use('riggedHand', {
+  controller.use('handHold').use('handEntry').use('screenPosition').use('transform', {
+    quaternion: (new THREE.Quaternion).setFromEuler(new THREE.Euler(0, Math.PI / 2, Math.PI / 2)),
+    position: new THREE.Vector3(1, 0, 0)
+  }).use('riggedHand', {
     parent: scene,
     scale: getParam('scale'),
     positionScale: getParam('positionScale'),
     offset: function(leapHand) {
       return new THREE.Vector3(0, Math.sin((new Date).getTime() / 1000 * 3), 0);
+    },
+    offset: function() {
+      return new THREE.Vector3(0, 0, 0);
     },
     renderFn: function() {
       renderer.render(scene, camera);

@@ -99,6 +99,8 @@ unless THREE.Quaternion.prototype.setFromVectors
     @
 
 unless THREE.Bone.prototype.positionFromWorld
+
+  # Set's the bones quaternion
   THREE.Bone.prototype.positionFromWorld = (eye, target) ->
     directionDotParentDirection = @worldDirection.dot(@parent.worldDirection)
     angle = Math.acos directionDotParentDirection
@@ -252,8 +254,8 @@ Leap.plugin 'riggedHand', (scope = {})->
       screenPosition.y = (screenPosition.y * window.innerHeight / 2) + window.innerHeight / 2
       screenPosition
 
-    handMesh.scenePosition = (leapPosition, scenePosition) ->
-      scenePosition.fromLeap(leapPosition, handMesh.leapScale)
+    handMesh.scenePosition = (leapPosition, scenePosition, offset) ->
+      scenePosition.fromLeap(leapPosition, handMesh.leapScale, offset)
         # these two add the base offset
         .sub(handMesh.positionRaw)
         .add(handMesh.position)
@@ -341,8 +343,20 @@ Leap.plugin 'riggedHand', (scope = {})->
     new THREE.MeshNormalMaterial()
   )
   
+  scope.positionDots = (leapHand, handMesh, offset)->
+    return unless scope.dotsMode
+
+    for leapFinger, i in leapHand.fingers
+      for point in ['mcp', 'pip', 'dip', 'tip']
+        unless dots["#{point}-#{i}"]
+          dots["#{point}-#{i}"] = basicDotMesh.clone()
+          scope.parent.add dots["#{point}-#{i}"]
+
+        handMesh.scenePosition(leapFinger["#{point}Position"], dots["#{point}-#{i}"].position, offset)
+
   @on 'handFound', addMesh
   @on 'handLost',  removeMesh
+
 
 
   {
@@ -375,6 +389,7 @@ Leap.plugin 'riggedHand', (scope = {})->
         handMesh.position.copy(handMesh.positionRaw).multiplyScalar(scope.positionScale)
 
         handMesh.matrix.lookAt(palm.worldDirection, zeroVector, palm.up)
+
         # set worldQuaternion before using it to position fingers (threejs updates handMesh.quaternion, but only too late)
         palm.worldQuaternion.setFromRotationMatrix( handMesh.matrix )
 
@@ -383,16 +398,11 @@ Leap.plugin 'riggedHand', (scope = {})->
             if bone.children[0]
               bone.worldDirection.subVectors(bone.children[0].positionLeap, bone.positionLeap).normalize()
               bone.positionFromWorld(bone.children[0].positionLeap, bone.positionLeap)
+#              bone.matrix
+#              debugger
+#              bone.quaternion
 
-
-        if scope.dotsMode
-          for leapFinger, i in leapHand.fingers
-            for point in ['mcp', 'pip', 'dip', 'tip']
-              unless dots["#{point}-#{i}"]
-                dots["#{point}-#{i}"] = basicDotMesh.clone()
-                scope.parent.add dots["#{point}-#{i}"]
-
-              handMesh.scenePosition(leapFinger["#{point}Position"], dots["#{point}-#{i}"].position)
+        scope.positionDots(leapHand, handMesh, offset)
 
 
         if scope.boneLabels

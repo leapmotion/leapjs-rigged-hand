@@ -1,23 +1,3 @@
-/*                    
- * LeapJS Rigged Hand - v0.1.0 - 2014-04-18                    
- * http://github.com/leapmotion/leapjs-rigged-hand/                    
- *                    
- * Copyright 2014 LeapMotion, Inc                    
- *                    
- * Licensed under the Apache License, Version 2.0 (the "License");                    
- * you may not use this file except in compliance with the License.                    
- * You may obtain a copy of the License at                    
- *                    
- *     http://www.apache.org/licenses/LICENSE-2.0                    
- *                    
- * Unless required by applicable law or agreed to in writing, software                    
- * distributed under the License is distributed on an "AS IS" BASIS,                    
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.                    
- * See the License for the specific language governing permissions and                    
- * limitations under the License.                    
- *                    
- */                    
-
 ;(function( window, undefined ){
 
 var rigs = {};
@@ -354,8 +334,8 @@ var _sortBy = function (obj, iterator, context) {
         screenPosition.y = (screenPosition.y * window.innerHeight / 2) + window.innerHeight / 2;
         return screenPosition;
       };
-      handMesh.scenePosition = function(leapPosition, scenePosition) {
-        return scenePosition.fromLeap(leapPosition, handMesh.leapScale).sub(handMesh.positionRaw).add(handMesh.position);
+      handMesh.scenePosition = function(leapPosition, scenePosition, offset) {
+        return scenePosition.fromLeap(leapPosition, handMesh.leapScale, offset).sub(handMesh.positionRaw).add(handMesh.position);
       };
       return handMesh;
     };
@@ -417,11 +397,37 @@ var _sortBy = function (obj, iterator, context) {
     };
     dots = {};
     basicDotMesh = new THREE.Mesh(new THREE.IcosahedronGeometry(.3, 1), new THREE.MeshNormalMaterial());
+    scope.positionDots = function(leapHand, handMesh, offset) {
+      var i, leapFinger, point, _i, _len, _ref, _results;
+      if (!scope.dotsMode) {
+        return;
+      }
+      _ref = leapHand.fingers;
+      _results = [];
+      for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+        leapFinger = _ref[i];
+        _results.push((function() {
+          var _j, _len1, _ref1, _results1;
+          _ref1 = ['mcp', 'pip', 'dip', 'tip'];
+          _results1 = [];
+          for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+            point = _ref1[_j];
+            if (!dots["" + point + "-" + i]) {
+              dots["" + point + "-" + i] = basicDotMesh.clone();
+              scope.parent.add(dots["" + point + "-" + i]);
+            }
+            _results1.push(handMesh.scenePosition(leapFinger["" + point + "Position"], dots["" + point + "-" + i].position, offset));
+          }
+          return _results1;
+        })());
+      }
+      return _results;
+    };
     this.on('handFound', addMesh);
     this.on('handLost', removeMesh);
     return {
       frame: function(frame) {
-        var boneColors, face, faceIndices, geometry, handMesh, hue, i, j, leapFinger, leapHand, lightness, mcp, offset, palm, point, saturation, weights, xBoneHSL, yBoneHSL, _base, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _m, _n, _name, _name1, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
+        var boneColors, face, faceIndices, geometry, handMesh, hue, i, j, leapHand, lightness, mcp, offset, palm, saturation, weights, xBoneHSL, yBoneHSL, _base, _i, _j, _k, _l, _len, _len1, _len2, _len3, _name, _name1, _ref, _ref1, _ref2, _ref3;
         if (scope.stats) {
           scope.stats.begin();
         }
@@ -460,21 +466,7 @@ var _sortBy = function (obj, iterator, context) {
               }
             });
           }
-          if (scope.dotsMode) {
-            _ref3 = leapHand.fingers;
-            for (i = _l = 0, _len3 = _ref3.length; _l < _len3; i = ++_l) {
-              leapFinger = _ref3[i];
-              _ref4 = ['mcp', 'pip', 'dip', 'tip'];
-              for (_m = 0, _len4 = _ref4.length; _m < _len4; _m++) {
-                point = _ref4[_m];
-                if (!dots["" + point + "-" + i]) {
-                  dots["" + point + "-" + i] = basicDotMesh.clone();
-                  scope.parent.add(dots["" + point + "-" + i]);
-                }
-                handMesh.scenePosition(leapFinger["" + point + "Position"], dots["" + point + "-" + i].position);
-              }
-            }
-          }
+          scope.positionDots(leapHand, handMesh, offset);
           if (scope.boneLabels) {
             palm.traverse(function(bone) {
               var element, screenPosition;
@@ -511,9 +503,9 @@ var _sortBy = function (obj, iterator, context) {
             }
             geometry.colorsNeedUpdate = true;
             faceIndices = 'abc';
-            _ref5 = geometry.faces;
-            for (_n = 0, _len5 = _ref5.length; _n < _len5; _n++) {
-              face = _ref5[_n];
+            _ref3 = geometry.faces;
+            for (_l = 0, _len3 = _ref3.length; _l < _len3; _l++) {
+              face = _ref3[_l];
               j = 0;
               while (j < 3) {
                 face.vertexColors[j] = geometry.colors[face[faceIndices[j]]];

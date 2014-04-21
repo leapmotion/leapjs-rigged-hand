@@ -45,6 +45,9 @@ module.exports = (grunt) ->
             task + filename + '.js'
         },
         {
+          'build/leap.transform.js': "src/leap.transform.coffee"
+        },
+        {
           expand: true
           cwd: 'examples/'
           src: '*.coffee'
@@ -130,6 +133,6 @@ module.exports = (grunt) ->
     'coffee',
     'concat',
     'string-replace',
-    'uglify',
-    'usebanner'
+#    'uglify',
+#    'usebanner'
   ]);
