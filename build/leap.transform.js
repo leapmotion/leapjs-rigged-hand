@@ -23,13 +23,13 @@
       } else if (scope.position || scope.quaternion || scope.scale) {
         _matrix.set.apply(_matrix, noop);
         if (scope.quaternion) {
-          _matrix.makeRotationFromQuaternion(scope.quaternion);
+          _matrix.makeRotationFromQuaternion(typeof scope.quaternion === 'function' ? scope.quaternion(hand) : scope.quaternion);
         }
         if (scope.scale) {
-          _matrix.scale(scope.scale);
+          _matrix.scale(typeof scope.scale === 'function' ? scope.scale(hand) : scope.scale);
         }
         if (scope.position) {
-          _matrix.setPosition(scope.position);
+          _matrix.setPosition(typeof scope.position === 'function' ? scope.position(hand) : scope.position);
         }
         return _matrix.elements;
       } else {

@@ -27,9 +27,20 @@ Leap.plugin 'transform', (scope = {})->
     else if scope.position || scope.quaternion || scope.scale
       _matrix.set.apply(_matrix, noop)
 
-      _matrix.makeRotationFromQuaternion(scope.quaternion) if scope.quaternion
-      _matrix.scale(scope.scale) if scope.scale
-      _matrix.setPosition(scope.position) if scope.position
+      if scope.quaternion
+        _matrix.makeRotationFromQuaternion(
+          if typeof scope.quaternion == 'function' then scope.quaternion(hand) else scope.quaternion
+        )
+
+      if scope.scale
+        _matrix.scale(
+          if typeof scope.scale == 'function'      then scope.scale(hand)      else scope.scale
+        )
+
+      if scope.position
+        _matrix.setPosition(
+          if typeof scope.position == 'function'   then scope.position(hand)   else scope.position
+        )
 
       return _matrix.elements
 

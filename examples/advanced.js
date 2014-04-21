@@ -55,7 +55,10 @@ function getParam(name) {
 
   controller.use('handHold').use('handEntry').use('screenPosition').use('transform', {
     quaternion: (new THREE.Quaternion).setFromEuler(new THREE.Euler(0, Math.PI / 2, Math.PI / 2)),
-    position: new THREE.Vector3(1, 0, 0)
+    position: new THREE.Vector3(1, 0, 0),
+    scale: function() {
+      return new THREE.Vector3(Math.pow(Math.sin((new Date).getTime() / 1000 * 3), 2) + 1, 1, 1);
+    }
   }).use('riggedHand', {
     parent: scene,
     scale: getParam('scale'),
