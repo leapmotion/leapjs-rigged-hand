@@ -199,7 +199,7 @@ Leap.plugin 'riggedHand', (scope = {})->
     data.materials[0].emissive.setHex(0x888888)
 
     data.materials[0].vertexColors = THREE.VertexColors
-    data.materials[0].depthTest = false
+    data.materials[0].depthTest = true
 
     _extend(data.materials[0], scope.materialOptions)
     _extend(data.geometry,     scope.geometryOptions)
@@ -276,9 +276,10 @@ Leap.plugin 'riggedHand', (scope = {})->
   
   addMesh = (leapHand)->
 #    console.time 'hand found'
-    # Create the mesh
     JSON = if scope.lowPoly then lowPolyRigs[leapHand.type] else rigs[leapHand.type]
     handMesh = createMesh(JSON)
+    handMesh.castShadow = true
+
     scope.parent.add handMesh
     leapHand.data('riggedHand.mesh', handMesh)
     palm = handMesh.children[0]
@@ -322,6 +323,9 @@ Leap.plugin 'riggedHand', (scope = {})->
 
     palm.worldDirection  = new THREE.Vector3
     palm.worldQuaternion = handMesh.quaternion
+
+    controller.emit('riggedHand.meshAdded', handMesh, leapHand)
+
 #    console.timeEnd 'hand found'
 
 
@@ -334,6 +338,7 @@ Leap.plugin 'riggedHand', (scope = {})->
       handMesh.children[0].traverse (bone)->
         document.body.removeChild handMesh.boneLabels[bone.id]
 
+    controller.emit('riggedHand.meshRemoved', handMesh, leapHand)
     scope.renderFn() if scope.renderFn
 
   # for use when dotsMode = true

@@ -282,7 +282,7 @@ var _sortBy = function (obj, iterator, context) {
       data.materials[0].opacity = 0.7;
       data.materials[0].emissive.setHex(0x888888);
       data.materials[0].vertexColors = THREE.VertexColors;
-      data.materials[0].depthTest = false;
+      data.materials[0].depthTest = true;
       _extend(data.materials[0], scope.materialOptions);
       _extend(data.geometry, scope.geometryOptions);
       handMesh = new THREE.SkinnedMesh(data.geometry, data.materials[0]);
@@ -350,6 +350,7 @@ var _sortBy = function (obj, iterator, context) {
       var JSON, handMesh, palm, rigFinger, _i, _len, _ref;
       JSON = scope.lowPoly ? lowPolyRigs[leapHand.type] : rigs[leapHand.type];
       handMesh = createMesh(JSON);
+      handMesh.castShadow = true;
       scope.parent.add(handMesh);
       leapHand.data('riggedHand.mesh', handMesh);
       palm = handMesh.children[0];
@@ -380,7 +381,8 @@ var _sortBy = function (obj, iterator, context) {
         rigFinger.tip.positionLeap = new THREE.Vector3;
       }
       palm.worldDirection = new THREE.Vector3;
-      return palm.worldQuaternion = handMesh.quaternion;
+      palm.worldQuaternion = handMesh.quaternion;
+      return controller.emit('riggedHand.meshAdded', handMesh, leapHand);
     };
     removeMesh = function(leapHand) {
       var handMesh;
@@ -391,6 +393,7 @@ var _sortBy = function (obj, iterator, context) {
           return document.body.removeChild(handMesh.boneLabels[bone.id]);
         });
       }
+      controller.emit('riggedHand.meshRemoved', handMesh, leapHand);
       if (scope.renderFn) {
         return scope.renderFn();
       }

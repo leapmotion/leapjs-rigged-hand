@@ -84,6 +84,18 @@ Automatically adds or removes hand meshes to/from the scene as they come in to o
   .connect()
 ```
 
+### Events
+
+`riggedHand.meshAdded` and `riggedHand.meshRemoved` are available.  These may be useful to customize behaviors of the
+hand or change defaults.  By default, `material.opacity == 0.7`, `material.depthTest == true`, and
+`handMesh.castShadow == true`, but these could be customized in the event callback.
+
+```javascript
+controller.on('riggedHand.meshAdded', function(handMesh, leapHand){
+  handMesh.material.opacity = 1;
+});
+```
+
 ### Scene Position
 
 `handMesh.scenePosition(leapPosition, scenePosition)` can be used to convert coordinates from Leap Space to THREE scene space.
