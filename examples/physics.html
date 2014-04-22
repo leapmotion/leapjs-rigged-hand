@@ -1,0 +1,56 @@
+<html>
+<head>
+  <title>Physics Example | LeapJS Rigged Hand</title>
+  <script type="text/javascript" src="lib/three.js"></script>
+  <script type="text/javascript" src="lib/physi.js"></script>
+
+  <script src="//js.leapmotion.com/leap-0.6.0-beta1.js"></script>
+  <script src="//js.leapmotion.com/leap-plugins-0.1.4.js"></script>
+  <script type="text/javascript" src="../build/leap.rigged-hand-0.1.0.js"></script>
+</head>
+<body>
+
+
+<script>
+  (window.controller = new Leap.Controller)
+    .use('riggedHand')
+    .connect()
+
+  Physijs.scripts.worker = 'lib/physijs_worker.js';
+ 	Physijs.scripts.ammo = 'lib/ammo.js';
+
+  scene = controller.plugins.riggedHand.parent;
+
+
+  ground_material = Physijs.createMaterial(
+      new THREE.MeshLambertMaterial({ map: THREE.ImageUtils.loadTexture('images/rocks.jpg') }),
+      .8, // high friction
+      .4 // low restitution
+  );
+  ground_material.map.wrapS = ground_material.map.wrapT = THREE.RepeatWrapping;
+  ground_material.map.repeat.set(2.5, 2.5);
+
+  // Ground
+  ground = new Physijs.BoxMesh(
+      new THREE.CubeGeometry(50, 1, 50),
+      //new THREE.PlaneGeometry(50, 50),
+      ground_material,
+      0 // mass
+  );
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  var bumper,
+      bumper_geom = new THREE.CubeGeometry(2, 1, 50);
+
+  bumper = new Physijs.BoxMesh(bumper_geom, ground_material, 0, { restitution: .2 });
+  bumper.position.y = 1;
+  bumper.position.x = -24;
+  bumper.receiveShadow = true;
+  bumper.castShadow = true;
+  scene.add(bumper);
+</script>
+
+
+</body>
+</html>

@@ -1,3 +1,4 @@
+# this file is used with ../index.html
 `// http://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
 function getParam(name) {
     name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");

@@ -203,7 +203,7 @@ Leap.plugin 'riggedHand', (scope = {})->
 
     _extend(data.materials[0], scope.materialOptions)
     _extend(data.geometry,     scope.geometryOptions)
-    handMesh = new THREE.SkinnedMesh(data.geometry, data.materials[0])
+    handMesh = new Physijs.ConcaveMesh(data.geometry, data.materials[0])
     handMesh.scale.multiplyScalar(scope.scale)
     handMesh.positionRaw = new THREE.Vector3
     handMesh.fingers = handMesh.children[0].children
