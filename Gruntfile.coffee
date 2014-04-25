@@ -133,6 +133,6 @@ module.exports = (grunt) ->
     'coffee',
     'concat',
     'string-replace',
-#    'uglify',
-#    'usebanner'
+    'uglify',
+    'usebanner'
   ]);
