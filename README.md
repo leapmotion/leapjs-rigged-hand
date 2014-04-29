@@ -90,6 +90,10 @@ Automatically adds or removes hand meshes to/from the scene as they come in to o
   .connect()
 ```
 
+Note that the size of this file is quite large, as it includes left and right hand models.  It is recommended that you
+include the files [from our CDN](https://developer.leapmotion.com/leapjs/plugins), as that will encourage browser caching
+and ensure the assets are gzipped from 845KB to 348KB before sending.
+
 ### Events
 
 `riggedHand.meshAdded` and `riggedHand.meshRemoved` are available.  These may be useful to customize behaviors of the
