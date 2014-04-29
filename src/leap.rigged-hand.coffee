@@ -180,6 +180,8 @@ Leap.plugin 'riggedHand', (scope = {})->
   scope.positionScale ||= 1
   scope.initScene = initScene
 
+  controller = this
+
 
   # check WebGL support:
   scope.Detector = Detector

@@ -332,7 +332,7 @@ var _sortBy = function (obj, iterator, context) {
   };
 
   Leap.plugin('riggedHand', function(scope) {
-    var addMesh, basicDotMesh, createMesh, dots, projector, removeMesh, zeroVector;
+    var addMesh, basicDotMesh, controller, createMesh, dots, projector, removeMesh, zeroVector;
     if (scope == null) {
       scope = {};
     }
@@ -345,6 +345,7 @@ var _sortBy = function (obj, iterator, context) {
     scope.scale || (scope.scale = 1);
     scope.positionScale || (scope.positionScale = 1);
     scope.initScene = initScene;
+    controller = this;
     scope.Detector = Detector;
     if (scope['checkWebGL'] === void 0) {
       scope.checkWebGL = !scope.parent;
