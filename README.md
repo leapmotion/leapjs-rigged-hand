@@ -80,6 +80,12 @@ Automatically adds or removes hand meshes to/from the scene as they come in to o
           saturation: leapHand.pinchStrength
         }
 
+    # This will add a warning message to the page on browsers which do not support WebGL or do not have it enabled.
+    # By default, this will be used unless a `parent` scene is passed in.
+    # This uses @mrdoob's Detector.js
+    # Chrome, Firefox, Safari Developer mode, and IE11 all support WebGL.  http://caniuse.com/webgl
+    checkWebGL: true
+
   })
   .connect()
 ```

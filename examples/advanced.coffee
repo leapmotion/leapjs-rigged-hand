@@ -6,12 +6,17 @@ function getParam(name) {
     return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
 }`
 
+window.scene = null
+window.renderer = null
+window.camera = null
+
+
 initScene = (element)->
   window.scene = new THREE.Scene()
 
   window.renderer = new THREE.WebGLRenderer(alpha: true)
-  #renderer.setClearColor( 0x000000, 0) # for overlay on page
   renderer.setClearColor(0x000000, 1)
+
   renderer.setSize(window.innerWidth, window.innerHeight)
   element.appendChild(renderer.domElement)
 
@@ -19,9 +24,6 @@ initScene = (element)->
   scene.add axis
 
   scene.add new THREE.AmbientLight(0x888888)
-  #directionalLight = new THREE.DirectionalLight(  0xffffff, 1 )
-  #directionalLight.position.set( 10, -10, 10 );
-  #scene.add( directionalLight );
 
   pointLight = new THREE.PointLight(0xFFffff)
   pointLight.position = new THREE.Vector3(-20, 10, 0)
@@ -55,7 +57,11 @@ initScene = (element)->
   renderer.render(scene, camera)
 
 
-initScene(document.body)
+`// via Detector.js:
+var webglAvailable  = ( function () { try { var canvas = document.createElement( 'canvas' ); return !! window.WebGLRenderingContext && ( canvas.getContext( 'webgl' ) || canvas.getContext( 'experimental-webgl' ) ); } catch( e ) { return false; } } )()`
+
+if webglAvailable
+  initScene(document.body)
 
 stats = new Stats();
 
@@ -78,7 +84,7 @@ controller.use('handHold')
   })
   .use('riggedHand', {
     parent: scene
-    scale: getParam('scale') # a number, default of 1
+    scale: getParam('scale')                  # a number, default of 1
     positionScale: getParam('positionScale')  # a number, default of 1
 
     # This allows individual hand offsets
@@ -110,6 +116,7 @@ controller.use('handHold')
           hue: 0.6,
           saturation: leapHand.pinchStrength
         }
+    checkWebGL: true
   })
   .connect()
 

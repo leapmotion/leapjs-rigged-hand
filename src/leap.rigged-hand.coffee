@@ -8,6 +8,8 @@
 # materialOptions - A hash of properties for the material, such as wireframe: true
 # meshOptions - A hash of properties for the hand meshes, such as castShadow: true
 # dotsMode - shows a dot for every actual joint position, for comparison against the mesh calculations
+# checkWebGL: Boolean - whether or not to display a warning for non webgl-capable browser.  By default, this
+# will be used only if a THREE.js scene is not passed in for the hand.
 
 `
 // underscore's _.each implementation, use for _.extend
@@ -178,6 +180,19 @@ Leap.plugin 'riggedHand', (scope = {})->
   scope.positionScale ||= 1
   scope.initScene = initScene
 
+
+  # check WebGL support:
+  scope.Detector = Detector
+
+  if scope['checkWebGL'] == undefined
+    scope.checkWebGL = !scope.parent
+
+  if scope.checkWebGL
+    unless scope.Detector.webgl
+      scope.Detector.addGetWebGLMessage();
+      return
+
+
   unless scope.parent
     scope.initScene(document.body)
     scope.parent = scope.scene
@@ -238,7 +253,7 @@ Leap.plugin 'riggedHand', (scope = {})->
     # takes in a vec3 of leap coordinates, and converts them in to screen position,
     # based on the hand mesh position and camera position.
     handMesh.screenPosition = (position, camera)->
-      throw 'No camera provided' unless camera
+      console.assert(camera instanceof THREE.Camera, "screenPosition expects camera, got", camera);
       screenPosition = (new THREE.Vector3())
 
       if position instanceof THREE.Vector3
@@ -403,9 +418,6 @@ Leap.plugin 'riggedHand', (scope = {})->
             if bone.children[0]
               bone.worldDirection.subVectors(bone.children[0].positionLeap, bone.positionLeap).normalize()
               bone.positionFromWorld(bone.children[0].positionLeap, bone.positionLeap)
-#              bone.matrix
-#              debugger
-#              bone.quaternion
 
         scope.positionDots(leapHand, handMesh, offset)
 

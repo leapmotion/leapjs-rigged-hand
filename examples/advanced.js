@@ -8,6 +8,12 @@ function getParam(name) {
 };
   var controller, cursor, initScene, stats;
 
+  window.scene = null;
+
+  window.renderer = null;
+
+  window.camera = null;
+
   initScene = function(element) {
     var axis, pointLight;
     window.scene = new THREE.Scene();
@@ -39,7 +45,12 @@ function getParam(name) {
     return renderer.render(scene, camera);
   };
 
-  initScene(document.body);
+  // via Detector.js:
+var webglAvailable  = ( function () { try { var canvas = document.createElement( 'canvas' ); return !! window.WebGLRenderingContext && ( canvas.getContext( 'webgl' ) || canvas.getContext( 'experimental-webgl' ) ); } catch( e ) { return false; } } )();
+
+  if (webglAvailable) {
+    initScene(document.body);
+  }
 
   stats = new Stats();
 
@@ -91,7 +102,8 @@ function getParam(name) {
           saturation: leapHand.pinchStrength
         };
       }
-    }
+    },
+    checkWebGL: true
   }).connect();
 
   if (getParam('screenPosition')) {

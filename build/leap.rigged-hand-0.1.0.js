@@ -1,25 +1,64 @@
-/*                    
- * LeapJS Rigged Hand - v0.1.0 - 2014-04-24                    
- * http://github.com/leapmotion/leapjs-rigged-hand/                    
- *                    
- * Copyright 2014 LeapMotion, Inc                    
- *                    
- * Licensed under the Apache License, Version 2.0 (the "License");                    
- * you may not use this file except in compliance with the License.                    
- * You may obtain a copy of the License at                    
- *                    
- *     http://www.apache.org/licenses/LICENSE-2.0                    
- *                    
- * Unless required by applicable law or agreed to in writing, software                    
- * distributed under the License is distributed on an "AS IS" BASIS,                    
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.                    
- * See the License for the specific language governing permissions and                    
- * limitations under the License.                    
- *                    
- */                    
-
 ;(function( window, undefined ){
 
+/**
+ * @author alteredq / http://alteredqualia.com/
+ * @author mr.doob / http://mrdoob.com/
+ */
+
+var Detector = {
+
+	canvas: !! window.CanvasRenderingContext2D,
+	webgl: ( function () { try { var canvas = document.createElement( 'canvas' ); return !! window.WebGLRenderingContext && ( canvas.getContext( 'webgl' ) || canvas.getContext( 'experimental-webgl' ) ); } catch( e ) { return false; } } )(),
+	workers: !! window.Worker,
+	fileapi: window.File && window.FileReader && window.FileList && window.Blob,
+
+	getWebGLErrorMessage: function () {
+
+		var element = document.createElement( 'div' );
+		element.id = 'webgl-error-message';
+		element.style.fontFamily = 'monospace';
+		element.style.fontSize = '13px';
+		element.style.fontWeight = 'normal';
+		element.style.textAlign = 'center';
+		element.style.background = '#fff';
+		element.style.color = '#000';
+		element.style.padding = '1.5em';
+		element.style.width = '400px';
+		element.style.margin = '5em auto 0';
+
+		if ( ! this.webgl ) {
+
+			element.innerHTML = window.WebGLRenderingContext ? [
+				'Your graphics card does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL</a>.<br />',
+				'Find out how to get it <a href="http://get.webgl.org/" style="color:#000">here</a>.'
+			].join( '\n' ) : [
+				'Your browser does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL</a>.<br/>',
+				'Find out how to get it <a href="http://get.webgl.org/" style="color:#000">here</a>.'
+			].join( '\n' );
+
+		}
+
+		return element;
+
+	},
+
+	addGetWebGLMessage: function ( parameters ) {
+
+		var parent, id, element;
+
+		parameters = parameters || {};
+
+		parent = parameters.parent !== undefined ? parameters.parent : document.body;
+		id = parameters.id !== undefined ? parameters.id : 'oldie';
+
+		element = Detector.getWebGLErrorMessage();
+		element.id = id;
+
+		parent.appendChild( element );
+
+	}
+
+};
 var rigs = {};
 rigs.left = {
 
@@ -286,6 +325,16 @@ var _sortBy = function (obj, iterator, context) {
     scope.scale || (scope.scale = 1);
     scope.positionScale || (scope.positionScale = 1);
     scope.initScene = initScene;
+    scope.Detector = Detector;
+    if (scope['checkWebGL'] === void 0) {
+      scope.checkWebGL = !scope.parent;
+    }
+    if (scope.checkWebGL) {
+      if (!scope.Detector.webgl) {
+        scope.Detector.addGetWebGLMessage();
+        return;
+      }
+    }
     if (!scope.parent) {
       scope.initScene(document.body);
       scope.parent = scope.scene;
@@ -340,9 +389,7 @@ var _sortBy = function (obj, iterator, context) {
       }
       handMesh.screenPosition = function(position, camera) {
         var screenPosition;
-        if (!camera) {
-          throw 'No camera provided';
-        }
+        console.assert(camera instanceof THREE.Camera, "screenPosition expects camera, got", camera);
         screenPosition = new THREE.Vector3();
         if (position instanceof THREE.Vector3) {
           screenPosition.fromLeap(position.toArray(), this.leapScale);
