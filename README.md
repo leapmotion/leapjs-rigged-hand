@@ -144,7 +144,10 @@ controller.on 'frame', (frame)->
   if hand = frame.hands[0]
     handMesh = frame.hands[0].data('riggedHand.mesh')
     # to use screenPosition, we pass in any leap vector3 and the camera
-    screenPosition = handMesh.screenPosition(hand.fingers[1].tipPosition, camera)
+    screenPosition = handMesh.screenPosition(
+      hand.fingers[1].tipPosition, 
+      this.plugins.riggedHand.camera
+    )
     cursor.style.left = screenPosition.x
     cursor.style.bottom = screenPosition.y
 ```
