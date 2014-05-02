@@ -203,6 +203,9 @@ Leap.plugin 'riggedHand', (scope = {})->
 
 
   projector = new THREE.Projector()
+
+  spareMeshes = []
+
   # converts a ThreeJS JSON blob in to a mesh
   createMesh = (JSON)->
     # note: this causes a good 90ms pause on first run
@@ -224,6 +227,7 @@ Leap.plugin 'riggedHand', (scope = {})->
     handMesh.scale.multiplyScalar(scope.scale)
     handMesh.positionRaw = new THREE.Vector3
     handMesh.fingers = handMesh.children[0].children
+    handMesh.castShadow = true
 
     # Re-create the skin index on bones in a manner which will be accessible later
     handMesh.bonesBySkinIndex = {}
@@ -238,7 +242,6 @@ Leap.plugin 'riggedHand', (scope = {})->
     if scope.boneLabels
       handMesh.traverse (bone)->
         label = handMesh.boneLabels[bone.id] ||= document.createElement('div')
-        document.body.appendChild(label)
         label.style.position = 'absolute'
         label.style.zIndex = '10'
 
@@ -279,6 +282,17 @@ Leap.plugin 'riggedHand', (scope = {})->
 
     handMesh
 
+  getMesh = (leapHand)->
+    # Meshes are kept in memory after first-use, as it takes about 24ms, or two frames, to add one to the screen
+    # on a good computer.
+    if spareMeshes.length > 0
+      handMesh = spareMeshes.pop()
+    else
+      JSON = rigs[leapHand.type]
+      handMesh = createMesh(JSON)
+
+    handMesh
+
 
 
   # initialize JSONloader for speed
@@ -292,10 +306,9 @@ Leap.plugin 'riggedHand', (scope = {})->
   zeroVector = new THREE.Vector3(0,0,0)
   
   addMesh = (leapHand)->
-#    console.time 'hand found'
-    JSON = if scope.lowPoly then lowPolyRigs[leapHand.type] else rigs[leapHand.type]
-    handMesh = createMesh(JSON)
-    handMesh.castShadow = true
+    console.time 'addMesh'
+
+    handMesh = getMesh(leapHand)
 
     scope.parent.add handMesh
     leapHand.data('riggedHand.mesh', handMesh)
@@ -341,14 +354,24 @@ Leap.plugin 'riggedHand', (scope = {})->
     palm.worldDirection  = new THREE.Vector3
     palm.worldQuaternion = handMesh.quaternion
 
+
+    if scope.boneLabels
+      # start with palm
+      handMesh.children[0].traverse (bone)->
+        document.body.appendChild handMesh.boneLabels[bone.id]
+
     controller.emit('riggedHand.meshAdded', handMesh, leapHand)
 
-#    console.timeEnd 'hand found'
+    console.timeEnd 'addMesh'
 
 
   removeMesh = (leapHand)->
     handMesh = leapHand.data('riggedHand.mesh')
+    leapHand.data('riggedHand.mesh', null)
+
     scope.parent.remove handMesh
+
+    spareMeshes.push(handMesh)
 
     if scope.boneLabels
       # start with palm

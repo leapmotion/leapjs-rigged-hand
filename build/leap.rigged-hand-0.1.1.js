@@ -1,23 +1,3 @@
-/*                    
- * LeapJS Rigged Hand - v0.1.1 - 2014-04-28                    
- * http://github.com/leapmotion/leapjs-rigged-hand/                    
- *                    
- * Copyright 2014 LeapMotion, Inc                    
- *                    
- * Licensed under the Apache License, Version 2.0 (the "License");                    
- * you may not use this file except in compliance with the License.                    
- * You may obtain a copy of the License at                    
- *                    
- *     http://www.apache.org/licenses/LICENSE-2.0                    
- *                    
- * Unless required by applicable law or agreed to in writing, software                    
- * distributed under the License is distributed on an "AS IS" BASIS,                    
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.                    
- * See the License for the specific language governing permissions and                    
- * limitations under the License.                    
- *                    
- */                    
-
 ;(function( window, undefined ){
 
 /**
@@ -332,7 +312,7 @@ var _sortBy = function (obj, iterator, context) {
   };
 
   Leap.plugin('riggedHand', function(scope) {
-    var addMesh, basicDotMesh, controller, createMesh, dots, projector, removeMesh, zeroVector;
+    var addMesh, basicDotMesh, controller, createMesh, dots, getMesh, projector, removeMesh, spareMeshes, zeroVector;
     if (scope == null) {
       scope = {};
     }
@@ -364,6 +344,7 @@ var _sortBy = function (obj, iterator, context) {
       };
     }
     projector = new THREE.Projector();
+    spareMeshes = [];
     createMesh = function(JSON) {
       var data, handMesh, i;
       data = (new THREE.JSONLoader).parse(JSON);
@@ -379,6 +360,7 @@ var _sortBy = function (obj, iterator, context) {
       handMesh.scale.multiplyScalar(scope.scale);
       handMesh.positionRaw = new THREE.Vector3;
       handMesh.fingers = handMesh.children[0].children;
+      handMesh.castShadow = true;
       handMesh.bonesBySkinIndex = {};
       i = 0;
       handMesh.children[0].traverse(function(bone) {
@@ -391,7 +373,6 @@ var _sortBy = function (obj, iterator, context) {
         handMesh.traverse(function(bone) {
           var attribute, label, value, _base, _name, _ref, _results;
           label = (_base = handMesh.boneLabels)[_name = bone.id] || (_base[_name] = document.createElement('div'));
-          document.body.appendChild(label);
           label.style.position = 'absolute';
           label.style.zIndex = '10';
           label.style.color = 'white';
@@ -427,6 +408,16 @@ var _sortBy = function (obj, iterator, context) {
       };
       return handMesh;
     };
+    getMesh = function(leapHand) {
+      var JSON, handMesh;
+      if (spareMeshes.length > 0) {
+        handMesh = spareMeshes.pop();
+      } else {
+        JSON = rigs[leapHand.type];
+        handMesh = createMesh(JSON);
+      }
+      return handMesh;
+    };
     createMesh(rigs['right']);
     if (!THREE.Vector3.prototype.fromLeap) {
       THREE.Vector3.prototype.fromLeap = function(array, scale, offset) {
@@ -435,10 +426,9 @@ var _sortBy = function (obj, iterator, context) {
     }
     zeroVector = new THREE.Vector3(0, 0, 0);
     addMesh = function(leapHand) {
-      var JSON, handMesh, palm, rigFinger, _i, _len, _ref;
-      JSON = scope.lowPoly ? lowPolyRigs[leapHand.type] : rigs[leapHand.type];
-      handMesh = createMesh(JSON);
-      handMesh.castShadow = true;
+      var handMesh, palm, rigFinger, _i, _len, _ref;
+      console.time('addMesh');
+      handMesh = getMesh(leapHand);
       scope.parent.add(handMesh);
       leapHand.data('riggedHand.mesh', handMesh);
       palm = handMesh.children[0];
@@ -470,12 +460,20 @@ var _sortBy = function (obj, iterator, context) {
       }
       palm.worldDirection = new THREE.Vector3;
       palm.worldQuaternion = handMesh.quaternion;
-      return controller.emit('riggedHand.meshAdded', handMesh, leapHand);
+      if (scope.boneLabels) {
+        handMesh.children[0].traverse(function(bone) {
+          return document.body.appendChild(handMesh.boneLabels[bone.id]);
+        });
+      }
+      controller.emit('riggedHand.meshAdded', handMesh, leapHand);
+      return console.timeEnd('addMesh');
     };
     removeMesh = function(leapHand) {
       var handMesh;
       handMesh = leapHand.data('riggedHand.mesh');
+      leapHand.data('riggedHand.mesh', null);
       scope.parent.remove(handMesh);
+      spareMeshes.push(handMesh);
       if (scope.boneLabels) {
         handMesh.children[0].traverse(function(bone) {
           return document.body.removeChild(handMesh.boneLabels[bone.id]);
