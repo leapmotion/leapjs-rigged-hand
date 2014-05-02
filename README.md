@@ -97,7 +97,7 @@ and ensure the assets are gzipped from 845KB to 348KB before sending.
 
 ### Accessing THREE objects
 
-```javascript
+```coffeescript
 camera = controller.plugins.riggedHand.camera;
 scene = controller.plugins.riggedHand.scene;
 ```
