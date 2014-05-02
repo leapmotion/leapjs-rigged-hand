@@ -94,6 +94,14 @@ Note that the size of this file is quite large, as it includes left and right ha
 include the files [from our CDN](https://developer.leapmotion.com/leapjs/plugins), as that will encourage browser caching
 and ensure the assets are gzipped from 845KB to 348KB before sending.
 
+
+### Accessing THREE objects
+
+```coffeescript
+camera = controller.plugins.riggedHand.camera;
+scene = controller.plugins.riggedHand.scene;
+```
+
 ### Events
 
 `riggedHand.meshAdded` and `riggedHand.meshRemoved` are available.  These may be useful to customize behaviors of the
@@ -144,7 +152,10 @@ controller.on 'frame', (frame)->
   if hand = frame.hands[0]
     handMesh = frame.hands[0].data('riggedHand.mesh')
     # to use screenPosition, we pass in any leap vector3 and the camera
-    screenPosition = handMesh.screenPosition(hand.fingers[1].tipPosition, camera)
+    screenPosition = handMesh.screenPosition(
+      hand.fingers[1].tipPosition, 
+      this.plugins.riggedHand.camera
+    )
     cursor.style.left = screenPosition.x
     cursor.style.bottom = screenPosition.y
 ```
