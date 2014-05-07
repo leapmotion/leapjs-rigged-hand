@@ -147,12 +147,12 @@ initScene = (element)->
   @scene.add(pointLight)
 
   @camera = new THREE.PerspectiveCamera(
-    90,
+    45,
     window.innerWidth / window.innerHeight,
     1,
     1000
   )
-  @camera.position.fromArray([0,3,15])
+  @camera.position.fromArray([0,6,30])
   @camera.lookAt(new THREE.Vector3(0, 0, 0))
 
   window.addEventListener( 'resize', ->
