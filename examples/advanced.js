@@ -65,17 +65,11 @@ var webglAvailable  = ( function () { try { var canvas = document.createElement(
   window.controller = controller = new Leap.Controller;
 
   controller.use('handHold').use('transform', {
-    position: new THREE.Vector3(1, 0, 0),
-    scale: function() {
-      return new THREE.Vector3(Math.pow(Math.sin((new Date).getTime() / 1000 * 3), 2) + 1, 1, 1);
-    }
+    position: new THREE.Vector3(1, 0, 0)
   }).use('handEntry').use('screenPosition').use('riggedHand', {
     parent: scene,
     scale: getParam('scale'),
     positionScale: getParam('positionScale'),
-    offset: function(leapHand) {
-      return new THREE.Vector3(0, Math.sin((new Date).getTime() / 1000 * 3), 0);
-    },
     offset: function() {
       return new THREE.Vector3(0, 0, 0);
     },

@@ -1,5 +1,5 @@
 /*                    
- * LeapJS Rigged Hand - v0.1.2 - 2014-05-06                    
+ * LeapJS Rigged Hand - v0.1.2 - 2014-05-07                    
  * http://github.com/leapmotion/leapjs-rigged-hand/                    
  *                    
  * Copyright 2014 LeapMotion, Inc                    
@@ -364,7 +364,10 @@ var _sortBy = function (obj, iterator, context) {
       };
     }
     projector = new THREE.Projector();
-    spareMeshes = [];
+    spareMeshes = {
+      left: [],
+      right: []
+    };
     createMesh = function(JSON) {
       var data, handMesh, i;
       data = (new THREE.JSONLoader).parse(JSON);
@@ -429,9 +432,10 @@ var _sortBy = function (obj, iterator, context) {
       return handMesh;
     };
     getMesh = function(leapHand) {
-      var JSON, handMesh;
-      if (spareMeshes.length > 0) {
-        handMesh = spareMeshes.pop();
+      var JSON, handMesh, meshes;
+      meshes = spareMeshes[leapHand.type];
+      if (meshes.length > 0) {
+        handMesh = meshes.pop();
       } else {
         JSON = rigs[leapHand.type];
         handMesh = createMesh(JSON);
@@ -493,7 +497,7 @@ var _sortBy = function (obj, iterator, context) {
       handMesh = leapHand.data('riggedHand.mesh');
       leapHand.data('riggedHand.mesh', null);
       scope.parent.remove(handMesh);
-      spareMeshes.push(handMesh);
+      spareMeshes[leapHand.type].push(handMesh);
       if (scope.boneLabels) {
         handMesh.children[0].traverse(function(bone) {
           return document.body.removeChild(handMesh.boneLabels[bone.id]);

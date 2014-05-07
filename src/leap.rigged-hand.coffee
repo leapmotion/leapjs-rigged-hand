@@ -204,7 +204,10 @@ Leap.plugin 'riggedHand', (scope = {})->
 
   projector = new THREE.Projector()
 
-  spareMeshes = []
+  spareMeshes = {
+    left: [],
+    right: []
+  }
 
   # converts a ThreeJS JSON blob in to a mesh
   createMesh = (JSON)->
@@ -285,8 +288,9 @@ Leap.plugin 'riggedHand', (scope = {})->
   getMesh = (leapHand)->
     # Meshes are kept in memory after first-use, as it takes about 24ms, or two frames, to add one to the screen
     # on a good computer.
-    if spareMeshes.length > 0
-      handMesh = spareMeshes.pop()
+    meshes = spareMeshes[leapHand.type]
+    if meshes.length > 0
+      handMesh = meshes.pop()
     else
       JSON = rigs[leapHand.type]
       handMesh = createMesh(JSON)
@@ -371,7 +375,7 @@ Leap.plugin 'riggedHand', (scope = {})->
 
     scope.parent.remove handMesh
 
-    spareMeshes.push(handMesh)
+    spareMeshes[leapHand.type].push(handMesh)
 
     if scope.boneLabels
       # start with palm

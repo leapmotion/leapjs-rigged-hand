@@ -77,8 +77,8 @@ controller.use('handHold')
   .use('transform', {
 #    quaternion: (new THREE.Quaternion).setFromEuler(new THREE.Euler(0, Math.PI / 2, Math.PI / 2))
     position: new THREE.Vector3(1,0,0)
-    scale: ->
-      new THREE.Vector3(Math.pow(Math.sin( (new Date).getTime() / 1000 * 3), 2) + 1, 1, 1)
+#    scale: ->
+#      new THREE.Vector3(Math.pow(Math.sin( (new Date).getTime() / 1000 * 3), 2) + 1, 1, 1)
   })
   .use('handEntry')
   .use('screenPosition')
@@ -87,10 +87,10 @@ controller.use('handHold')
     scale: getParam('scale')                  # a number, default of 1
     positionScale: getParam('positionScale')  # a number, default of 1
 
-    # This allows individual hand offsets
-    offset: (leapHand)->
+#    This allows individual hand offsets
+#    offset: (leapHand)->
       # create a "breathing" effect..
-      new THREE.Vector3(0, Math.sin( (new Date).getTime() / 1000 * 3), 0)
+#      new THREE.Vector3(0, Math.sin( (new Date).getTime() / 1000 * 3), 0)
 
     offset: ()->
       new THREE.Vector3(0, 0, 0)
