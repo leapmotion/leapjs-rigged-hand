@@ -1,5 +1,5 @@
 /*                    
- * LeapJS Rigged Hand - v0.1.2 - 2014-05-07                    
+ * LeapJS Rigged Hand - v0.1.3 - 2014-05-07                    
  * http://github.com/leapmotion/leapjs-rigged-hand/                    
  *                    
  * Copyright 2014 LeapMotion, Inc                    
@@ -318,8 +318,8 @@ var _sortBy = function (obj, iterator, context) {
     pointLight.position = new THREE.Vector3(-20, 10, 0);
     pointLight.lookAt(new THREE.Vector3(0, 0, 0));
     this.scene.add(pointLight);
-    this.camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 1000);
-    this.camera.position.fromArray([0, 3, 15]);
+    this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+    this.camera.position.fromArray([0, 6, 30]);
     this.camera.lookAt(new THREE.Vector3(0, 0, 0));
     window.addEventListener('resize', function() {
       scope.camera.aspect = window.innerWidth / window.innerHeight;
@@ -498,6 +498,7 @@ var _sortBy = function (obj, iterator, context) {
       leapHand.data('riggedHand.mesh', null);
       scope.parent.remove(handMesh);
       spareMeshes[leapHand.type].push(handMesh);
+      console.assert(leapHand.type);
       if (scope.boneLabels) {
         handMesh.children[0].traverse(function(bone) {
           return document.body.removeChild(handMesh.boneLabels[bone.id]);

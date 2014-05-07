@@ -30,8 +30,8 @@ function getParam(name) {
     pointLight.position = new THREE.Vector3(-20, 10, 0);
     pointLight.lookAt(new THREE.Vector3(0, 0, 0));
     scene.add(pointLight);
-    window.camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 1000);
-    camera.position.fromArray([0, 3, 15]);
+    window.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+    camera.position.fromArray([0, 6, 30]);
     camera.lookAt(new THREE.Vector3(0, 0, 0));
     window.controls = new THREE.TrackballControls(camera);
     scene.add(camera);
