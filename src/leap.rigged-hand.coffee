@@ -9,6 +9,9 @@
 # meshOptions - A hash of properties for the hand meshes, such as castShadow: true
 # dotsMode - shows a dot for every actual joint position, for comparison against the mesh calculations
 # checkWebGL: Boolean - whether or not to display a warning for non webgl-capable browser.  By default, this
+# renderer: a THREE.js renderer to use.  By default, one will be created to fill the entire window, and be automatically
+#     resized.  Passing in a custom renderer will cause camera.aspect and camera.setSize to no longer be set.
+#
 # will be used only if a THREE.js scene is not passed in for the hand.
 
 `
@@ -129,16 +132,6 @@ initScene = (element)->
   scope = @
   @scene = new THREE.Scene()
 
-  @renderer = new THREE.WebGLRenderer(alpha: true)
-  @renderer.setClearColor( 0x000000, 0 )
-  @renderer.setSize(window.innerWidth, window.innerHeight)
-  @renderer.domElement.style.position = 'fixed'
-  @renderer.domElement.style.top = 0
-  @renderer.domElement.style.left = 0
-  @renderer.domElement.style.width = '100%'
-  @renderer.domElement.style.height = '100%'
-  element.appendChild(@renderer.domElement)
-
   @scene.add new THREE.AmbientLight(0x888888)
 
   pointLight = new THREE.PointLight(0xFFffff)
@@ -155,14 +148,25 @@ initScene = (element)->
   @camera.position.fromArray([0,6,30])
   @camera.lookAt(new THREE.Vector3(0, 0, 0))
 
-  window.addEventListener( 'resize', ->
-    scope.camera.aspect = window.innerWidth / window.innerHeight
-    scope.camera.updateProjectionMatrix()
+  unless @renderer
+    @renderer = new THREE.WebGLRenderer(alpha: true)
+    @renderer.setClearColor( 0x000000, 0 )
+    @renderer.setSize(window.innerWidth, window.innerHeight)
+    @renderer.domElement.style.position = 'fixed'
+    @renderer.domElement.style.top = 0
+    @renderer.domElement.style.left = 0
+    @renderer.domElement.style.width = '100%'
+    @renderer.domElement.style.height = '100%'
+    element.appendChild(@renderer.domElement)
 
-    scope.renderer.setSize( window.innerWidth, window.innerHeight )
+    window.addEventListener( 'resize', ->
+      scope.camera.aspect = window.innerWidth / window.innerHeight
+      scope.camera.updateProjectionMatrix()
 
-    scope.renderer.render(scope.scene, scope.camera)
-  , false )
+      scope.renderer.setSize( window.innerWidth, window.innerHeight )
+
+      scope.renderer.render(scope.scene, scope.camera)
+    , false )
 
   scope.scene.add(scope.camera)
   scope.renderer.render(scope.scene, scope.camera)
