@@ -18630,6 +18630,7 @@ THREE.ShaderLib = {
 				"varying vec3 vLightBack;",
 
 			"#endif",
+      "varying vec2 vSkinWeight;",
 
 			THREE.ShaderChunk[ "map_pars_vertex" ],
 			THREE.ShaderChunk[ "lightmap_pars_vertex" ],
@@ -18640,12 +18641,12 @@ THREE.ShaderLib = {
 			THREE.ShaderChunk[ "skinning_pars_vertex" ],
 			THREE.ShaderChunk[ "shadowmap_pars_vertex" ],
 
-      "varying vec2 vUv;",
+      "varying vec3 vPos;",
 
 			"void main() {",
 
 
-
+      "vPos = position;",
 				THREE.ShaderChunk[ "map_vertex" ],
 				THREE.ShaderChunk[ "lightmap_vertex" ],
 				THREE.ShaderChunk[ "color_vertex" ],
@@ -18664,7 +18665,9 @@ THREE.ShaderLib = {
 				THREE.ShaderChunk[ "lights_lambert_vertex" ],
 				THREE.ShaderChunk[ "shadowmap_vertex" ],
 
-      "vUv = uv;",
+      "vSkinWeight = skinWeight.xy;",
+
+//      "vUv = uv;",
 
 			"}"
 
@@ -18674,8 +18677,8 @@ THREE.ShaderLib = {
 
 			"uniform float opacity;",
 
-//      "varying vec2 vUv;",
-//      "uniform float time;",
+     "varying vec3 vPos;",
+      "uniform float time;",
 
 			"varying vec3 vLightFront;",
 
@@ -18685,6 +18688,9 @@ THREE.ShaderLib = {
 
 			"#endif",
 
+
+      "varying vec2 vSkinWeight;",
+
 			THREE.ShaderChunk[ "color_pars_fragment" ],
 			THREE.ShaderChunk[ "map_pars_fragment" ],
 			THREE.ShaderChunk[ "lightmap_pars_fragment" ],
@@ -18692,6 +18698,8 @@ THREE.ShaderLib = {
 			THREE.ShaderChunk[ "fog_pars_fragment" ],
 			THREE.ShaderChunk[ "shadowmap_pars_fragment" ],
 			THREE.ShaderChunk[ "specularmap_pars_fragment" ],
+
+
 
 			"void main() {",
 
@@ -18728,10 +18736,10 @@ THREE.ShaderLib = {
 
 				THREE.ShaderChunk[ "fog_fragment" ],
 
-//        "float red = abs(sin(position.x * position.y + time / 5.0));"     ,
-//        "float green = abs(sin(position.x * position.y + time / 4.0));  ",
-//        "float blue = abs(sin(position.x * position.y + time / 3.0 )); ",
-//        "gl_FragColor = vec4(red, green, blue, 1.0);                   ",
+        "float red = vSkinWeight.y;"     ,
+        "float green = 0.;  ",
+        "float blue = 0.; ",
+        "gl_FragColor = vec4(red, green, blue, 1.0);                   ",
 
 			"}"
 
