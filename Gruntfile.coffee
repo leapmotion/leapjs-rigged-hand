@@ -7,7 +7,7 @@ module.exports = (grunt) ->
     # note that for performance, watch does not minify. be sure to do so before shipping.
     watch: {
       options: {
-        livereload: true
+        livereload: false
       }
       coffee: {
         files: ['src/*.coffee', 'examples/*.coffee'],
@@ -54,7 +54,8 @@ module.exports = (grunt) ->
         }]
     concat: {
       build: {
-        src: ['src/lib/*.js', 'src/models/*.js', 'build/' + filename + '.js'],
+#        src: ['src/lib/*.js', 'src/models/*.js', 'build/' + filename + '.js'],
+        src: ['src/lib/*.js', 'src/models/left-hand.js', 'build/' + filename + '.js'],
         dest: 'build/' + filename + '.js'
         options: {
           banner: ";(function( window, undefined ){\n\n",

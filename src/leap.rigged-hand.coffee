@@ -234,7 +234,8 @@ Leap.plugin 'riggedHand', (scope = {})->
     handMesh = new THREE.SkinnedMesh(data.geometry, data.materials[0])
     handMesh.scale.multiplyScalar(scope.scale)
     handMesh.positionRaw = new THREE.Vector3
-    handMesh.fingers = handMesh.children[0].children
+    handMesh.palm = handMesh.children[0].children[0].children[0]
+    handMesh.fingers = handMesh.palm.children
     handMesh.castShadow = true
 
     # Re-create the skin index on bones in a manner which will be accessible later
@@ -316,7 +317,7 @@ Leap.plugin 'riggedHand', (scope = {})->
 
 
   # initialize JSONloader for speed
-  createMesh(rigs['right'])
+  createMesh(rigs['left'])
 
   unless THREE.Vector3.prototype.fromLeap
     # converts a leap array [x,y,z] in to a scene-based vector3.
@@ -332,7 +333,7 @@ Leap.plugin 'riggedHand', (scope = {})->
 
     scope.parent.add handMesh
     leapHand.data('riggedHand.mesh', handMesh)
-    palm = handMesh.children[0]
+    palm = handMesh.palm
 
     # Mesh scale set by comparing leap first bone length to mesh first bone length
     handMesh.leapScale =
@@ -345,28 +346,41 @@ Leap.plugin 'riggedHand', (scope = {})->
     # actually we need the above so that position is factored in
     palm.worldUp = new THREE.Vector3
     palm.positionLeap = new THREE.Vector3
-    for rigFinger in handMesh.fingers
-      rigFinger.pip = rigFinger.children[0]
+
+    for rigFinger, i in handMesh.fingers
+
+      # thumb is index 1 and has one less bone
+      if i == 1
+        rigFinger.mcp = rigFinger
+      else
+        rigFinger.mcp = rigFinger.children[0]
+
+      rigFinger.pip = rigFinger.mcp.children[0]
       rigFinger.dip = rigFinger.pip.children[0]
       rigFinger.tip = rigFinger.dip.children[0]
 
       rigFinger.    worldQuaternion = new THREE.Quaternion
+      rigFinger.mcp.worldQuaternion = new THREE.Quaternion
       rigFinger.pip.worldQuaternion = new THREE.Quaternion
       rigFinger.dip.worldQuaternion = new THREE.Quaternion
 
       rigFinger.    worldAxis       = new THREE.Vector3
+      rigFinger.mcp.worldAxis       = new THREE.Vector3
       rigFinger.pip.worldAxis       = new THREE.Vector3
       rigFinger.dip.worldAxis       = new THREE.Vector3
 
       rigFinger.    worldDirection  = new THREE.Vector3
+      rigFinger.mcp.worldDirection  = new THREE.Vector3
       rigFinger.pip.worldDirection  = new THREE.Vector3
       rigFinger.dip.worldDirection  = new THREE.Vector3
 
       rigFinger.    worldUp         = new THREE.Vector3
+      rigFinger.mcp.worldUp         = new THREE.Vector3
       rigFinger.pip.worldUp         = new THREE.Vector3
       rigFinger.dip.worldUp         = new THREE.Vector3
 
       rigFinger.    positionLeap   = new THREE.Vector3
+      rigFinger.mcp.positionLeap   = new THREE.Vector3
       rigFinger.pip.positionLeap   = new THREE.Vector3
       rigFinger.dip.positionLeap   = new THREE.Vector3
       rigFinger.tip.positionLeap   = new THREE.Vector3
@@ -431,15 +445,18 @@ Leap.plugin 'riggedHand', (scope = {})->
         # this works around a subtle bug where non-extended fingers would appear after extended ones
         leapHand.fingers = _sortBy(leapHand.fingers, (finger)-> finger.id)
         handMesh = leapHand.data('riggedHand.mesh')
-        palm = handMesh.children[0]
+        palm = handMesh.palm
 
         palm.positionLeap.fromArray(leapHand.palmPosition)
         # wrist -> mcp -> pip -> dip -> tip
         for mcp, i in palm.children
-          mcp.    positionLeap.fromArray(leapHand.fingers[i].mcpPosition)
+          mcp.    positionLeap.fromArray(leapHand.fingers[i].carpPosition)
+          mcp.mcp.positionLeap.fromArray(leapHand.fingers[i].mcpPosition)
           mcp.pip.positionLeap.fromArray(leapHand.fingers[i].pipPosition)
           mcp.dip.positionLeap.fromArray(leapHand.fingers[i].dipPosition)
-          mcp.tip.positionLeap.fromArray(leapHand.fingers[i].tipPosition)
+#          mcp.tip.positionLeap.fromArray(leapHand.fingers[i].btipPosition)
+
+          mcp.tip.positionLeap.fromArray(leapHand.fingers[i].distal.nextJoint)
 
 
         # set heading on palm so that finger.parent can access
