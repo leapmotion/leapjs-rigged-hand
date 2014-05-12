@@ -265,8 +265,16 @@ Leap.plugin 'riggedHand', (scope = {})->
 
     # takes in a vec3 of leap coordinates, and converts them in to screen position,
     # based on the hand mesh position and camera position.
-    handMesh.screenPosition = (position, camera)->
+    # accepts optional width and height values, which default to
+    handMesh.screenPosition = (position)->
+
+      camera = scope.camera
       console.assert(camera instanceof THREE.Camera, "screenPosition expects camera, got", camera);
+
+      width = scope.renderer.domElement.width
+      height = scope.renderer.domElement.height
+      console.assert(width && height);
+
       screenPosition = (new THREE.Vector3())
 
       if position instanceof THREE.Vector3
@@ -278,8 +286,11 @@ Leap.plugin 'riggedHand', (scope = {})->
           .add(@position)
 
       screenPosition = projector.projectVector(screenPosition, camera)
-      screenPosition.x = (screenPosition.x * window.innerWidth / 2) + window.innerWidth / 2
-      screenPosition.y = (screenPosition.y * window.innerHeight / 2) + window.innerHeight / 2
+      screenPosition.x = (screenPosition.x * width / 2) + width / 2
+      screenPosition.y = (screenPosition.y * height / 2) + height / 2
+
+      console.assert(!isNaN(screenPosition.x) && !isNaN(screenPosition.x), 'x/y screen position invalid')
+
       screenPosition
 
     handMesh.scenePosition = (leapPosition, scenePosition, offset) ->

@@ -14,7 +14,6 @@ module.exports = (grunt) ->
         tasks: ['default-no-uglify'],
         options: {
           spawn: false,
-          livereload: true
         },
       },
       js: {
@@ -22,7 +21,6 @@ module.exports = (grunt) ->
         tasks: ['default-no-uglify'],
         options: {
           spawn: false,
-          livereload: true
         },
       },
       html: {
@@ -30,7 +28,6 @@ module.exports = (grunt) ->
         tasks: [],
         options: {
           spawn: false,
-          livereload: true
         },
       },
     },

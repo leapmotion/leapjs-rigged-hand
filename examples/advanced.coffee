@@ -84,6 +84,7 @@ controller.use('handHold')
   .use('screenPosition')
   .use('riggedHand', {
     parent: scene
+    renderer: renderer # needed for screenPosition later
     scale: getParam('scale')                  # a number, default of 1
     positionScale: getParam('positionScale')  # a number, default of 1
 
@@ -92,8 +93,7 @@ controller.use('handHold')
       # create a "breathing" effect..
 #      new THREE.Vector3(0, Math.sin( (new Date).getTime() / 1000 * 3), 0)
 
-    offset: ()->
-      new THREE.Vector3(0, 0, 0)
+    offset: new THREE.Vector3(0, 0, 0)
 
     renderFn: ()->
       renderer.render(scene, camera)
