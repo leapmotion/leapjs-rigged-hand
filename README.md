@@ -153,8 +153,9 @@ When a hand is on the screen, that hand will be available to your application (s
  through `frame.hands[index].data('riggedHand.mesh')`.  This will be the Three.js mesh, as is.
 
 To get the css window coordinates of anything in leap-space, use the `handMesh.screenPosition` method, as seen in
-main.coffee.  Note that if your WebGL canvas doesn't take up the whole screen in a fixed position, you will need to
-add an offset. See [https://github.com/mrdoob/three.js/issues/78](https://github.com/mrdoob/three.js/issues/78).
+main.coffee.  The number returned will be distance from the bottom left corner of the WebGL canvas.
+
+Note that if a custom scene is passed in, `scope.renderer` must also be passed in/set.
 
 ```coffeescript
 controller.on 'frame', (frame)->
@@ -162,8 +163,7 @@ controller.on 'frame', (frame)->
     handMesh = frame.hands[0].data('riggedHand.mesh')
     # to use screenPosition, we pass in any leap vector3 and the camera
     screenPosition = handMesh.screenPosition(
-      hand.fingers[1].tipPosition, 
-      this.plugins.riggedHand.camera
+      hand.fingers[1].tipPosition
     )
     cursor.style.left = screenPosition.x
     cursor.style.bottom = screenPosition.y
