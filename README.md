@@ -95,12 +95,21 @@ include the files [from our CDN](https://developer.leapmotion.com/leapjs/plugins
 and ensure the assets are gzipped from 845KB to 348KB before sending.
 
 
-### Accessing THREE objects
+### Scope objects
+
+Certain objects are made available on the plugin scope.  This is the same "options" object which is passed in to `use`.
 
 ```coffeescript
-camera = controller.plugins.riggedHand.camera;
-scene = controller.plugins.riggedHand.scene;
+scope = controller.plugins.riggedHand; 
+
+scope.camera # THREE.js camera
+
+scope.scene # THREE.js camera
+
+scope.Detector # Can be used to detect webgl availability through `if !!Detector.webgl`
 ```
+
+There are many which are currently undocumented.  Inspect the object manually to discover.
 
 ### Events
 
