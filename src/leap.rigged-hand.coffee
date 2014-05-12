@@ -202,8 +202,9 @@ Leap.plugin 'riggedHand', (scope = {})->
   unless scope.parent
     scope.initScene(document.body)
     scope.parent = scope.scene
-    scope.renderFn = ->
-      scope.renderer.render(scope.scene, scope.camera)
+
+  scope.renderFn ||= ->
+    scope.renderer.render(scope.scene, scope.camera)
 
 
   projector = new THREE.Projector()
