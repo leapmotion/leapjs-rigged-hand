@@ -18631,6 +18631,7 @@ THREE.ShaderLib = {
 
 			"#endif",
       "varying vec2 vSkinWeight;",
+      "varying vec2 vSkinIndex;",
 
 			THREE.ShaderChunk[ "map_pars_vertex" ],
 			THREE.ShaderChunk[ "lightmap_pars_vertex" ],
@@ -18666,6 +18667,7 @@ THREE.ShaderLib = {
 				THREE.ShaderChunk[ "shadowmap_vertex" ],
 
       "vSkinWeight = skinWeight.xy;",
+      "vSkinIndex = skinIndex.xy;",
 
 //      "vUv = uv;",
 
@@ -18689,7 +18691,9 @@ THREE.ShaderLib = {
 			"#endif",
 
 
+
       "varying vec2 vSkinWeight;",
+      "varying vec2 vSkinIndex;",
 
 			THREE.ShaderChunk[ "color_pars_fragment" ],
 			THREE.ShaderChunk[ "map_pars_fragment" ],
@@ -18736,8 +18740,8 @@ THREE.ShaderLib = {
 
 				THREE.ShaderChunk[ "fog_fragment" ],
 
-        "float red = vSkinWeight.y;"     ,
-        "float green = 0.;  ",
+        "float red = 0.;"     ,
+        "float green = vSkinIndex.x/21.;  ",
         "float blue = 0.; ",
         "gl_FragColor = vec4(red, green, blue, 1.0);                   ",
 
