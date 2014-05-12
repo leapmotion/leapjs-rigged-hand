@@ -1,5 +1,5 @@
 /*                    
- * LeapJS Rigged Hand - v0.1.3 - 2014-05-07                    
+ * LeapJS Rigged Hand - v0.1.3 - 2014-05-12                    
  * http://github.com/leapmotion/leapjs-rigged-hand/                    
  *                    
  * Copyright 2014 LeapMotion, Inc                    
@@ -361,10 +361,10 @@ var _sortBy = function (obj, iterator, context) {
     if (!scope.parent) {
       scope.initScene(document.body);
       scope.parent = scope.scene;
-      scope.renderFn = function() {
-        return scope.renderer.render(scope.scene, scope.camera);
-      };
     }
+    scope.renderFn || (scope.renderFn = function() {
+      return scope.renderer.render(scope.scene, scope.camera);
+    });
     projector = new THREE.Projector();
     spareMeshes = {
       left: [],
@@ -414,9 +414,13 @@ var _sortBy = function (obj, iterator, context) {
           return _results;
         });
       }
-      handMesh.screenPosition = function(position, camera) {
-        var screenPosition;
+      handMesh.screenPosition = function(position) {
+        var camera, height, screenPosition, width;
+        camera = scope.camera;
         console.assert(camera instanceof THREE.Camera, "screenPosition expects camera, got", camera);
+        width = scope.renderer.domElement.width;
+        height = scope.renderer.domElement.height;
+        console.assert(width && height);
         screenPosition = new THREE.Vector3();
         if (position instanceof THREE.Vector3) {
           screenPosition.fromLeap(position.toArray(), this.leapScale);
@@ -424,8 +428,9 @@ var _sortBy = function (obj, iterator, context) {
           screenPosition.fromLeap(position, this.leapScale).sub(this.positionRaw).add(this.position);
         }
         screenPosition = projector.projectVector(screenPosition, camera);
-        screenPosition.x = (screenPosition.x * window.innerWidth / 2) + window.innerWidth / 2;
-        screenPosition.y = (screenPosition.y * window.innerHeight / 2) + window.innerHeight / 2;
+        screenPosition.x = (screenPosition.x * width / 2) + width / 2;
+        screenPosition.y = (screenPosition.y * height / 2) + height / 2;
+        console.assert(!isNaN(screenPosition.x) && !isNaN(screenPosition.x), 'x/y screen position invalid');
         return screenPosition;
       };
       handMesh.scenePosition = function(leapPosition, scenePosition, offset) {

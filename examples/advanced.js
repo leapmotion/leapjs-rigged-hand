@@ -68,11 +68,10 @@ var webglAvailable  = ( function () { try { var canvas = document.createElement(
     position: new THREE.Vector3(1, 0, 0)
   }).use('handEntry').use('screenPosition').use('riggedHand', {
     parent: scene,
+    renderer: renderer,
     scale: getParam('scale'),
     positionScale: getParam('positionScale'),
-    offset: function() {
-      return new THREE.Vector3(0, 0, 0);
-    },
+    offset: new THREE.Vector3(0, 0, 0),
     renderFn: function() {
       renderer.render(scene, camera);
       return controls.update();
