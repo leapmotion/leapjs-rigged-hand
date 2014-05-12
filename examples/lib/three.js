@@ -11352,11 +11352,11 @@ THREE.JSONLoader.prototype.parse = function ( json, texturePath ) {
 		}
 
     // hacked in by peter
-    for ( i = 0; i < geometry.bones.length; i++) {
-      for ( j = 0; j < 3; j++) {
-        geometry.bones[i].pos[j] *= scale;
-      }
-    }
+//    for ( i = 0; i < geometry.bones.length; i++) {
+//      for ( j = 0; j < 3; j++) {
+//        geometry.bones[i].pos[j] *= scale;
+//      }
+//    }
 
 		// could change this to json.animations[0] or remove completely
 		geometry.animation = json.animation;
@@ -18613,7 +18613,8 @@ THREE.ShaderLib = {
 			{
 				"ambient"  : { type: "c", value: new THREE.Color( 0xffffff ) },
 				"emissive" : { type: "c", value: new THREE.Color( 0x000000 ) },
-				"wrapRGB"  : { type: "v3", value: new THREE.Vector3( 1, 1, 1 ) }
+				"wrapRGB"  : { type: "v3", value: new THREE.Vector3( 1, 1, 1 ) },
+        time: { type: "f", value: 0 }
 			}
 
 		] ),
@@ -18639,7 +18640,11 @@ THREE.ShaderLib = {
 			THREE.ShaderChunk[ "skinning_pars_vertex" ],
 			THREE.ShaderChunk[ "shadowmap_pars_vertex" ],
 
+      "varying vec2 vUv;",
+
 			"void main() {",
+
+
 
 				THREE.ShaderChunk[ "map_vertex" ],
 				THREE.ShaderChunk[ "lightmap_vertex" ],
@@ -18659,6 +18664,8 @@ THREE.ShaderLib = {
 				THREE.ShaderChunk[ "lights_lambert_vertex" ],
 				THREE.ShaderChunk[ "shadowmap_vertex" ],
 
+      "vUv = uv;",
+
 			"}"
 
 		].join("\n"),
@@ -18666,6 +18673,9 @@ THREE.ShaderLib = {
 		fragmentShader: [
 
 			"uniform float opacity;",
+
+//      "varying vec2 vUv;",
+//      "uniform float time;",
 
 			"varying vec3 vLightFront;",
 
@@ -18684,6 +18694,8 @@ THREE.ShaderLib = {
 			THREE.ShaderChunk[ "specularmap_pars_fragment" ],
 
 			"void main() {",
+
+//        "vec2 position = -1.0 + 2.0 * vUv;",
 
 				"gl_FragColor = vec4( vec3 ( 1.0 ), opacity );",
 
@@ -18715,6 +18727,11 @@ THREE.ShaderLib = {
 				THREE.ShaderChunk[ "linear_to_gamma_fragment" ],
 
 				THREE.ShaderChunk[ "fog_fragment" ],
+
+//        "float red = abs(sin(position.x * position.y + time / 5.0));"     ,
+//        "float green = abs(sin(position.x * position.y + time / 4.0));  ",
+//        "float blue = abs(sin(position.x * position.y + time / 3.0 )); ",
+//        "gl_FragColor = vec4(red, green, blue, 1.0);                   ",
 
 			"}"
 
@@ -23924,7 +23941,16 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		};
 
-		material.program = buildProgram( shaderID, material.fragmentShader, material.vertexShader, material.uniforms, material.attributes, material.defines, parameters, material.index0AttributeName );
+		material.program = buildProgram(
+      shaderID,
+      material.fragmentShader,
+      material.vertexShader,
+      material.uniforms,
+      material.attributes,
+      material.defines,
+      parameters,
+      material.index0AttributeName
+    );
 
 		var attributes = material.program.attributes;
 

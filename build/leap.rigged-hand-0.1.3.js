@@ -1,23 +1,3 @@
-/*                    
- * LeapJS Rigged Hand - v0.1.3 - 2014-05-07                    
- * http://github.com/leapmotion/leapjs-rigged-hand/                    
- *                    
- * Copyright 2014 LeapMotion, Inc                    
- *                    
- * Licensed under the Apache License, Version 2.0 (the "License");                    
- * you may not use this file except in compliance with the License.                    
- * You may obtain a copy of the License at                    
- *                    
- *     http://www.apache.org/licenses/LICENSE-2.0                    
- *                    
- * Unless required by applicable law or agreed to in writing, software                    
- * distributed under the License is distributed on an "AS IS" BASIS,                    
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.                    
- * See the License for the specific language governing permissions and                    
- * limitations under the License.                    
- *                    
- */                    
-
 ;(function( window, undefined ){
 
 /**
@@ -361,24 +341,27 @@ var _sortBy = function (obj, iterator, context) {
     if (!scope.parent) {
       scope.initScene(document.body);
       scope.parent = scope.scene;
-      scope.renderFn = function() {
-        return scope.renderer.render(scope.scene, scope.camera);
-      };
     }
+    scope.renderFn || (scope.renderFn = function() {
+      return scope.renderer.render(scope.scene, scope.camera);
+    });
     projector = new THREE.Projector();
     spareMeshes = {
       left: [],
       right: []
     };
     createMesh = function(JSON) {
-      var data, handMesh, i;
+      var data, handMesh, i, m;
       data = (new THREE.JSONLoader).parse(JSON);
       data.materials[0].skinning = true;
       data.materials[0].transparent = true;
       data.materials[0].opacity = 0.7;
       data.materials[0].emissive.setHex(0x888888);
       data.materials[0].vertexColors = THREE.VertexColors;
+      data.materials[0].vertexColors = THREE.NoColors;
       data.materials[0].depthTest = true;
+      m = data.materials[0];
+      console.log(m.map, m.lightMap, m.specularMap, m.envMap);
       _extend(data.materials[0], scope.materialOptions);
       _extend(data.geometry, scope.geometryOptions);
       handMesh = new THREE.SkinnedMesh(data.geometry, data.materials[0]);
