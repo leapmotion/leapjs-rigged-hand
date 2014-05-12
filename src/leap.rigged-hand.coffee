@@ -227,11 +227,30 @@ Leap.plugin 'riggedHand', (scope = {})->
     data.materials[0].emissive.setHex(0x888888)
 
     data.materials[0].vertexColors = THREE.VertexColors
+    data.materials[0].vertexColors = THREE.NoColors;
     data.materials[0].depthTest = true
+
+#    		"#if defined( USE_MAP ) || defined( USE_BUMPMAP ) || defined( USE_NORMALMAP ) || defined( USE_SPECULARMAP )",
+    m = data.materials[0]
+    console.log(m.map, m.lightMap, m.specularMap, m.envMap)
+#    debugger
+
+
+#    material = new THREE.ShaderMaterial({
+#       uniforms: uniforms,
+#       vertexShader: document.getElementById('vertexShader').innerHTML,
+#       fragmentShader: document.getElementById('fragmentShader').innerHTML
+#    });
+
+#    material = new THREE.MeshLambertMaterial
+#    material.skinning = true
+
 
     _extend(data.materials[0], scope.materialOptions)
     _extend(data.geometry,     scope.geometryOptions)
+
     handMesh = new THREE.SkinnedMesh(data.geometry, data.materials[0])
+
     handMesh.scale.multiplyScalar(scope.scale)
     handMesh.positionRaw = new THREE.Vector3
     handMesh.fingers = handMesh.children[0].children
