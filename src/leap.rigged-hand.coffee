@@ -14,6 +14,8 @@
 #
 # will be used only if a THREE.js scene is not passed in for the hand.
 
+TO_RAD = Math.PI / 180
+
 `
 // underscore's _.each implementation, use for _.extend
 var _each = function(obj, iterator, context) {
@@ -95,37 +97,6 @@ var _sortBy = function (obj, iterator, context) {
   }), 'value');
 }`
 
-# http://lolengine.net/blog/2013/09/18/beautiful-maths-quaternion-from-vectors
-unless THREE.Quaternion.prototype.setFromVectors
-  THREE.Quaternion.prototype.setFromVectors = (a, b)->
-    axis = (new THREE.Vector3).crossVectors(a, b)
-    @set(axis.x, axis.y, axis.z, 1 + a.dot(b))
-    @normalize()
-    @
-
-unless THREE.Bone.prototype.positionFromWorld
-
-  # Set's the bones quaternion
-  THREE.Bone.prototype.positionFromWorld = (eye, target) ->
-    directionDotParentDirection = @worldDirection.dot(@parent.worldDirection)
-    angle = Math.acos directionDotParentDirection
-    @worldAxis.crossVectors(@parent.worldDirection, @worldDirection).normalize()
-
-    # http://en.wikipedia.org/wiki/Rodrigues'_rotation_formula
-    # v = palmNormal = parentUp
-    # k = rotation axis = worldAxis
-    @worldUp.set(0,0,0)
-      .add(@parent.worldUp.clone().multiplyScalar(directionDotParentDirection))
-      .add((new THREE.Vector3).crossVectors(@worldAxis, @parent.worldUp).multiplyScalar(Math.sin(angle)))
-      .add(@worldAxis.clone().multiplyScalar(@worldAxis.dot(@parent.worldUp) * (1 - directionDotParentDirection)))
-      .normalize()
-
-
-    @matrix.lookAt(eye, target, @worldUp)
-    @worldQuaternion.setFromRotationMatrix( @matrix )
-    # Set this quaternion to be only the local change:
-    @quaternion.copy(@parent.worldQuaternion).inverse().multiply(@worldQuaternion)
-    @
 
 # Creates the default ThreeJS scene if no parent passed in.
 initScene = (element)->
@@ -147,6 +118,15 @@ initScene = (element)->
   )
   @camera.position.fromArray([0,6,30])
   @camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+
+  geometry = new THREE.SphereGeometry( 0.3, 32, 32 );
+  material = new THREE.MeshBasicMaterial( {color: 0xff0000} );
+  window.sphere = new THREE.Mesh( geometry, material );
+  @scene.add( window.sphere );
+
+  window.sphere = new THREE.SphereGeometry(10)
+  @scene.add(sphere)
 
   unless @renderer
     @renderer = new THREE.WebGLRenderer(alpha: true)
@@ -172,16 +152,16 @@ initScene = (element)->
   scope.renderer.render(scope.scene, scope.camera)
 
 
-
 Leap.plugin 'riggedHand', (scope = {})->
   @use('handHold')
   @use('handEntry')
   @use('versionCheck', {requiredProtocolVersion: 6})
 
   scope.offset ||= new THREE.Vector3(0,-10,0)
+#  scope.offset ||= new THREE.Vector3(0,-84,0)
   scope.scale ||= 1
   # this allow the hand to move disproportionately to its size.
-  scope.positionScale ||= 1
+  scope.positionScale ||= 0.4
   scope.initScene = initScene
 
   controller = this
@@ -215,6 +195,7 @@ Leap.plugin 'riggedHand', (scope = {})->
   }
 
   # converts a ThreeJS JSON blob in to a mesh
+  # this should be converted to a subclass of SkinnedMesh which still responds to isntanceof SkinnedMesh
   createMesh = (JSON)->
     # note: this causes a good 90ms pause on first run
     # it appears as if mesh.clone does not clone material and geometry, so at this point we refrain from doing so
@@ -232,11 +213,22 @@ Leap.plugin 'riggedHand', (scope = {})->
     _extend(data.materials[0], scope.materialOptions)
     _extend(data.geometry,     scope.geometryOptions)
     handMesh = new THREE.SkinnedMesh(data.geometry, data.materials[0])
-    handMesh.scale.multiplyScalar(scope.scale)
+    handMesh.scale.multiplyScalar(scope.scale * 50)
+    handMesh.castShadow = true
     handMesh.positionRaw = new THREE.Vector3
+
     handMesh.palm = handMesh.children[0].children[0].children[0]
     handMesh.fingers = handMesh.palm.children
-    handMesh.castShadow = true
+
+    thumb = handMesh.fingers.splice(1,1)
+    handMesh.fingers.unshift(thumb)
+    console.log "Mesh fingers:", handMesh.fingers.map( (finger)-> finger.name )
+
+
+
+    # our besh has a weird "root" bone, which offsets the rotations unless we axe it
+    # this should be removed in future versions of the mesh
+    handMesh.children[0].children[0].position = new THREE.Vector3(0,0,0)
 
     # Re-create the skin index on bones in a manner which will be accessible later
     handMesh.bonesBySkinIndex = {}
@@ -317,7 +309,42 @@ Leap.plugin 'riggedHand', (scope = {})->
 
 
   # initialize JSONloader for speed
-  createMesh(rigs['left'])
+
+  mesh = createMesh(rigs['left'])
+
+  window.fatArrow = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 0, 0 ), 4, 0x000000, 0.5, 0.5)
+  fatArrow.position = mesh.position
+  scope.scene.add(window.fatArrow)
+
+  window.fatArrow2 = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 0, 0 ), 4, 0x000000, 0.5, 0.5)
+  fatArrow2.position = mesh.position
+  scope.scene.add(window.fatArrow2)
+
+  window.fatArrow3 = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 0, 0 ), 4, 0xff0000, 0.5, 0.5)
+  fatArrow3.position = mesh.position
+  scope.scene.add(window.fatArrow3)
+
+  window.arrow = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 0, 0 ), 4, 0x000000)
+  arrow.position = mesh.position
+  scope.scene.add(window.arrow)
+
+  window.arrow2 = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 0, 0 ), 4, 0x660000)
+  arrow2.position = mesh.position
+  scope.scene.add(window.arrow2)
+
+  window.arrow3 = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 0, 0 ), 4, 0xff6600)
+  arrow3.position = mesh.position
+  scope.scene.add(window.arrow3)
+
+  window.arrow4 = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 0, 0 ), 4, 0x0000ff)
+  arrow4.position = mesh.position
+  scope.scene.add(window.arrow4)
+
+
+#  scope.scene.add(mesh)
+  sphere.position = mesh.position
+  window.camera = scope.camera
+
 
   unless THREE.Vector3.prototype.fromLeap
     # converts a leap array [x,y,z] in to a scene-based vector3.
@@ -338,9 +365,11 @@ Leap.plugin 'riggedHand', (scope = {})->
     # Mesh scale set by comparing leap first bone length to mesh first bone length
     handMesh.leapScale =
       (new THREE.Vector3).subVectors(
-        (new THREE.Vector3).fromArray(leapHand.fingers[2].pipPosition)
+        (new THREE.Vector3).fromArray(leapHand.fingers[2].pipPosition),
         (new THREE.Vector3).fromArray(leapHand.fingers[2].mcpPosition)
       ).length() / handMesh.fingers[2].position.length() / scope.scale
+
+
 
     # Initialize Vectors for later use
     # actually we need the above so that position is factored in
@@ -436,14 +465,32 @@ Leap.plugin 'riggedHand', (scope = {})->
   @on 'handFound', addMesh
   @on 'handLost',  removeMesh
 
+  THREE.Matrix3.prototype.multiplyMatrices = (a, b)->
+    ae = a.elements
+    be = b.elements
+
+    `
+    var result = [];
+    for(var row = 0; row < 3; ++row) {
+      result[row] = [];
+      for(var col = 0; col < 3; ++col) {
+        result[row][col] = 0;
+        for(var con = 0; con < 3; ++con) {
+          result[row][col] += ae[row * 3 + con] * be[con * 3 + col];
+        }
+      }
+    }`
+
+    @elements = result[0].concat(result[1]).concat(result[2])
+    @
+
+
 
 
   {
     frame: (frame)->
       scope.stats.begin() if scope.stats
       for leapHand in frame.hands
-        # this works around a subtle bug where non-extended fingers would appear after extended ones
-        leapHand.fingers = _sortBy(leapHand.fingers, (finger)-> finger.id)
         handMesh = leapHand.data('riggedHand.mesh')
         palm = handMesh.palm
 
@@ -454,8 +501,6 @@ Leap.plugin 'riggedHand', (scope = {})->
           mcp.mcp.positionLeap.fromArray(leapHand.fingers[i].mcpPosition)
           mcp.pip.positionLeap.fromArray(leapHand.fingers[i].pipPosition)
           mcp.dip.positionLeap.fromArray(leapHand.fingers[i].dipPosition)
-#          mcp.tip.positionLeap.fromArray(leapHand.fingers[i].btipPosition)
-
           mcp.tip.positionLeap.fromArray(leapHand.fingers[i].distal.nextJoint)
 
 
@@ -470,16 +515,115 @@ Leap.plugin 'riggedHand', (scope = {})->
         handMesh.positionRaw.fromLeap(leapHand.palmPosition, handMesh.leapScale, offset)
         handMesh.position.copy(handMesh.positionRaw).multiplyScalar(scope.positionScale)
 
+
         handMesh.matrix.lookAt(palm.worldDirection, zeroVector, palm.up)
 
         # set worldQuaternion before using it to position fingers (threejs updates handMesh.quaternion, but only too late)
         palm.worldQuaternion.setFromRotationMatrix( handMesh.matrix )
 
-        for mcp in palm.children
-          mcp.traverse (bone)->
-            if bone.children[0]
-              bone.worldDirection.subVectors(bone.children[0].positionLeap, bone.positionLeap).normalize()
-              bone.positionFromWorld(bone.children[0].positionLeap, bone.positionLeap)
+        palm.children[0].worldQuaternion = palm.worldQuaternion
+        palm.children[0].worldUp = palm.worldUp
+
+#        for carp in palm.children
+#          carp.traverse (bone)->
+#            if bone.children[0]
+#              bone.worldDirection.subVectors(bone.children[0].positionLeap, bone.positionLeap).normalize()
+#              bone.positionFromWorld(bone.children[0].positionLeap, bone.positionLeap)
+
+
+
+        # source is leap
+        # target is model
+        equivalentChildBasis = (sourceParentBasis, sourceChildBasis, targetParentBasis)->
+          relativeRotation = Transpose(sourceParentBasis) * sourceChildBasis;
+          targetChildBasis = targetParentBasis * relativeRotation;
+          return targetChildBasis
+
+        absoluteTransformation = (sourceParentBasis, sourceChildBasis, targetParentBasis)->
+          absoluteRotation = sourceChildBasis * Transpose(sourceParentBasis);
+          return absoluteRotation
+
+
+
+        leapParentBasis = leapHand.indexFinger.metacarpal.basis
+        sourceParentBasisT = (new THREE.Matrix3)
+        sourceParentBasisT.elements = leapParentBasis[0].concat(leapParentBasis[1]).concat(leapParentBasis[2])
+        sourceParentBasis = sourceParentBasisT.clone().transpose()
+
+        leapChildBasis = leapHand.indexFinger.proximal.basis
+        sourceChildBasisT = (new THREE.Matrix3)
+        sourceChildBasisT.elements = leapChildBasis[0].concat(leapChildBasis[1]).concat(leapChildBasis[2])
+        sourceChildBasis = sourceChildBasisT.clone().transpose()
+
+        arrow.setRotationFromMatrix( sourceParentBasis  )
+        arrow2.setRotationFromMatrix( sourceChildBasis )
+
+        # input: two left handed basis
+        # returns on right handed basis
+        targetChildBasis = (new THREE.Matrix3).multiplyMatrices(sourceParentBasisT, sourceChildBasis)
+        te = targetChildBasis.elements
+
+        # conversion for right-handed basis
+        # NOTE: Because targetParentBasis was right handed there is no chiral conversion here.
+        # NOTE: If tagetParentBasis were left handed, te[0], te[1] and te[2] would be negate,
+        # since targetChildMatrix is required to be a rotation.
+        # In the left handed case, the rotation is relative to a global basis in which the reflection
+        # is defined by the negation of the first basis vector.
+        targetChildMatrix = (new THREE.Matrix4)
+        targetChildMatrix.elements = [
+          te[0],
+          te[1],
+          te[2],
+          0,
+          te[3],
+          te[4],
+          te[5],
+          0
+          te[6],
+          te[7],
+          te[8],
+          0,
+          0,
+          0,
+          0,
+          1
+        ]
+
+
+        isOronormal = (mat3)->
+          transpose = mat3.clone().transpose()
+          result = (new THREE.Matrix3).multiplyMatrices(mat3, transpose).elements
+          `var sum2 = 0;
+            for (var row = 0; row < 3; ++row) {
+
+              for(var col = 0; col < 3; ++col) {
+                if(row === col) {
+                  sum2 += (result[row * 3 + col] - 1) * ( result[row * 3 + col] - 1 );
+                } else {
+                  sum2 +=  result[row * 3 + col]      *   result[row * 3 + col];
+                }
+              }
+
+            }`
+          console.assert(sum2 < 0.00001);
+#          debugger
+
+#        isOronormal(sourceChildBasis)
+#        isOronormal(sourceParentBasis)
+        isOronormal(targetChildBasis)
+
+        targetChildMatrix.elements.map = Array.prototype.map
+#        document.getElementById('debug').innerHTML = targetChildMatrix.elements.map((e) -> return e.toPrecision(4))
+
+        arrow3.setRotationFromMatrix(
+          targetChildMatrix
+        );
+        arrow3.quaternion
+
+        palm.children[1].mcp.matrix = arrow3.matrix
+        palm.children[1].mcp.quaternion.setFromRotationMatrix(targetChildMatrix)
+
+        document.getElementById('debug').innerHTML = palm.children[0].mcp.quaternion.toArray().map((e) -> return e.toPrecision(4))
 
         scope.positionDots(leapHand, handMesh, offset)
 

@@ -2,17 +2,19 @@
 <!-- This Demo overlays a rigged hand on top of the existing page.  Requires a WebGL-capable browser. -->
 <head>
   <script type="text/javascript" src="examples/lib/three.js"></script>
-  <script src="//js.leapmotion.com/leap-0.6.0-beta3_1.js"></script>
+  <script src="examples/lib/leap-0.6.0-beta4.js"></script>
   <script src="//js.leapmotion.com/leap-plugins-0.1.4.js"></script>
-  <script type="text/javascript" src="build/leap.rigged-hand-0.1.4-beta1.js"></script>
+  <script src="build/leap.rigged-hand-0.1.4-beta1.js"></script>
 </head>
 <body>
+
+<div id="debug"></div>
 
 <h1>Rigged Hand - Quickstart</h1>
 <p>Bring your hand over the Leap, and you should see it displayed</p>
 
 <script>
-  (window.controller = new Leap.Controller)
+  (window.controller = new Leap.Controller({background: false}))
     .use('riggedHand')
     .connect()
 </script>
