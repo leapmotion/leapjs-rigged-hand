@@ -17,8 +17,6 @@ var Pointable = require('./pointable'),
 
 var Bone = module.exports = function(finger, data) {
   this.finger = finger;
-  this.parent = null;
-  this.child = null;
 
   this._center = null, this._matrix = null;
 
@@ -27,7 +25,7 @@ var Bone = module.exports = function(finger, data) {
   *
   * * 0 -- metacarpal
   * * 1 -- proximal
-  * * 2 -- medial
+  * * 2 -- intermediate
   * * 3 -- distal
   *
   * @member type
@@ -88,14 +86,6 @@ var Bone = module.exports = function(finger, data) {
   this.basis = data.basis;
 };
 
-Bone.prototype.addChild = function(bone){
-
-  this.child = bone;
-  bone.parent = this;
-
-  return bone;
-};
-
 Bone.prototype.left = function(){
 
   if (this._left) return this._left;
@@ -106,57 +96,8 @@ Bone.prototype.left = function(){
 
 };
 
-/** 
- * returns the local Affine transform between this bone and its parent bone
- */
-Bone.prototype.localMatrix = function(){
-  if (!this.parent){
-    return mat4.create();
-  }
+Bone.
 
-  var pb = this.parent.basis,
-      b = this.basis; 
-
-  // Flatten basis in to single array.  Row major is transposed.
-  var parentMatrixTranspose = [].concat(pb[0]).concat(pb[1]).concat(pb[2]);
-  mat3.transpose(parentMatrixTranspose, parentMatrixTranspose);
-
-  // We want a 3x3, not 4x3, so don't use the .matrix method here
-  var matrix = [].concat(b[0]).concat(b[1]).concat(b[2]);
-  // mat3.transpose(matrix, matrix);
-
-
-  var m3 = mat3.create();
-
-
-  // conversion for right-handed basis
-  // NOTE: Because targetParentBasis was right handed there is no chiral conversion here.
-  // NOTE: If tagetParentBasis were left handed, te[0], te[1] and te[2] would be negate,
-  // since targetChildMatrix is required to be a rotation.
-  // In the left handed case, the rotation is relative to a global basis in which the reflection
-  // is defined by the negation of the first basis vector.
-  mat3.multiply(m3, parentMatrixTranspose, matrix);
-
-  mat3.transpose(m3, m3);
-
-  // gl-matrix doesn't provide mat4.fromMat3 (although they provide the reverse), so we do it manually here
-
-  var m4 = mat4.create();
-
-  m4[0] = m3[0];
-  m4[1] = m3[1];
-  m4[2] = m3[2];
-
-  m4[4] = m3[3];
-  m4[5] = m3[4];
-  m4[6] = m3[5];
-
-  m4[8] = m3[6];
-  m4[9] = m3[7];
-  m4[10] = m3[8];
-
-  return m4;
-}
 
 /**
  * The Affine transformation matrix describing the orientation of the bone, in global Leap-space.
@@ -1311,7 +1252,7 @@ var Finger = module.exports = function(data) {
   * This joint is closest to the tip.
   * 
   * The distal interphalangeal joint is located between the most extreme segment
-  * of the finger (the distal phalanx) and the middle segment (the medial
+  * of the finger (the distal phalanx) and the middle segment (the intermediate
   * phalanx).
   *
   * @member dipPosition
@@ -1325,8 +1266,8 @@ var Finger = module.exports = function(data) {
   * joint of a finger.
   *
   * The proximal interphalangeal joint is located between the two finger segments
-  * closest to the hand (the proximal and the medial phalanges). On a thumb,
-  * which lacks an medial phalanx, this joint index identifies the knuckle joint
+  * closest to the hand (the proximal and the intermediate phalanges). On a thumb,
+  * which lacks an intermediate phalanx, this joint index identifies the knuckle joint
   * between the proximal phalanx and the metacarpal bone.
   *
   * @member pipPosition
@@ -1412,7 +1353,7 @@ _.extend(Finger.prototype, Pointable.prototype);
 Finger.prototype.addBones = function(data){
   /**
   * Four bones per finger, from wrist outwards:
-  * metacarpal, proximal, medial, and distal.
+  * metacarpal, proximal, intermediate, and distal.
   *
   * See http://en.wikipedia.org/wiki/Interphalangeal_articulations_of_hand
   */
@@ -1424,21 +1365,21 @@ Finger.prototype.addBones = function(data){
     basis: data.bases[0]
   });
 
-  this.proximal     = this.metacarpal.addChild( new Bone(this, {
+  this.proximal     = new Bone(this, {
     type: 1,
     width: this.width,
     prevJoint: this.mcpPosition,
     nextJoint: this.pipPosition,
     basis: data.bases[1]
-  }));
+  });
 
-  this.medial = this.proximal.addChild( new Bone(this, {
+  this.intermediate = new Bone(this, {
     type: 2,
     width: this.width,
     prevJoint: this.pipPosition,
     nextJoint: this.dipPosition,
     basis: data.bases[2]
-  }));
+  });
 
   /**
    * Note that the `distal.nextJoint` position is slightly different from the `finger.tipPosition`.
@@ -1447,15 +1388,15 @@ Finger.prototype.addBones = function(data){
    * the tipPosition.
    * @type {Bone}
    */
-  this.distal       = this.medial.addChild( new Bone(this, {
+  this.distal       = new Bone(this, {
     type: 3,
     width: this.width,
     prevJoint: this.dipPosition,
     nextJoint: data.btipPosition,
     basis: data.bases[3]
-  }));
+  });
 
-  this.bones = [this.metacarpal, this.proximal, this.medial, this.distal];
+  this.bones = [this.metacarpal, this.proximal, this.intermediate, this.distal];
 };
 
 Finger.prototype.toString = function() {

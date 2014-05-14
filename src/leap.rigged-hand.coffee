@@ -220,13 +220,15 @@ Leap.plugin 'riggedHand', (scope = {})->
     handMesh.palm = handMesh.children[0].children[0].children[0]
     handMesh.fingers = handMesh.palm.children
 
+    # our mesh comes with the fingers out of order
+    # this should be removed in future versions of the mesh :-/
     thumb = handMesh.fingers.splice(1,1)
-    handMesh.fingers.unshift(thumb)
-    console.log "Mesh fingers:", handMesh.fingers.map( (finger)-> finger.name )
+    handMesh.fingers.unshift(thumb[0])
+#    console.log "Mesh fingers:", handMesh.fingers.map( (finger)-> finger.name )
 
 
 
-    # our besh has a weird "root" bone, which offsets the rotations unless we axe it
+    # our mesh has a weird "root" bone, which offsets the rotations unless we axe it
     # this should be removed in future versions of the mesh
     handMesh.children[0].children[0].position = new THREE.Vector3(0,0,0)
 
@@ -301,8 +303,11 @@ Leap.plugin 'riggedHand', (scope = {})->
     if meshes.length > 0
       handMesh = meshes.pop()
     else
-      JSON = rigs[leapHand.type]
-      handMesh = createMesh(JSON)
+      if leapHand.type == 'right'
+        console.warn "right rig not available"
+      else
+        JSON = rigs[leapHand.type]
+        handMesh = createMesh(JSON)
 
     handMesh
 
@@ -379,7 +384,7 @@ Leap.plugin 'riggedHand', (scope = {})->
     for rigFinger, i in handMesh.fingers
 
       # thumb is index 1 and has one less bone
-      if i == 1
+      if i == 0
         rigFinger.mcp = rigFinger
       else
         rigFinger.mcp = rigFinger.children[0]
@@ -532,98 +537,44 @@ Leap.plugin 'riggedHand', (scope = {})->
 
 
 
-        # source is leap
-        # target is model
-        equivalentChildBasis = (sourceParentBasis, sourceChildBasis, targetParentBasis)->
-          relativeRotation = Transpose(sourceParentBasis) * sourceChildBasis;
-          targetChildBasis = targetParentBasis * relativeRotation;
-          return targetChildBasis
-
-        absoluteTransformation = (sourceParentBasis, sourceChildBasis, targetParentBasis)->
-          absoluteRotation = sourceChildBasis * Transpose(sourceParentBasis);
-          return absoluteRotation
 
 
 
-        leapParentBasis = leapHand.indexFinger.metacarpal.basis
-        sourceParentBasisT = (new THREE.Matrix3)
-        sourceParentBasisT.elements = leapParentBasis[0].concat(leapParentBasis[1]).concat(leapParentBasis[2])
-        sourceParentBasis = sourceParentBasisT.clone().transpose()
-
-        leapChildBasis = leapHand.indexFinger.proximal.basis
-        sourceChildBasisT = (new THREE.Matrix3)
-        sourceChildBasisT.elements = leapChildBasis[0].concat(leapChildBasis[1]).concat(leapChildBasis[2])
-        sourceChildBasis = sourceChildBasisT.clone().transpose()
-
-        arrow.setRotationFromMatrix( sourceParentBasis  )
-        arrow2.setRotationFromMatrix( sourceChildBasis )
-
-        # input: two left handed basis
-        # returns on right handed basis
-        targetChildBasis = (new THREE.Matrix3).multiplyMatrices(sourceParentBasisT, sourceChildBasis)
-        te = targetChildBasis.elements
-
-        # conversion for right-handed basis
-        # NOTE: Because targetParentBasis was right handed there is no chiral conversion here.
-        # NOTE: If tagetParentBasis were left handed, te[0], te[1] and te[2] would be negate,
-        # since targetChildMatrix is required to be a rotation.
-        # In the left handed case, the rotation is relative to a global basis in which the reflection
-        # is defined by the negation of the first basis vector.
-        targetChildMatrix = (new THREE.Matrix4)
-        targetChildMatrix.elements = [
-          te[0],
-          te[1],
-          te[2],
-          0,
-          te[3],
-          te[4],
-          te[5],
-          0
-          te[6],
-          te[7],
-          te[8],
-          0,
-          0,
-          0,
-          0,
-          1
-        ]
 
 
-        isOronormal = (mat3)->
-          transpose = mat3.clone().transpose()
-          result = (new THREE.Matrix3).multiplyMatrices(mat3, transpose).elements
-          `var sum2 = 0;
-            for (var row = 0; row < 3; ++row) {
+        # skinmatrix here instead?
+        palm.children[1].mcp.matrix.elements = leapHand.indexFinger.proximal.localMatrix()
+        palm.children[1].mcp.quaternion.setFromRotationMatrix(
+          palm.children[1].mcp.matrix
+        )
 
-              for(var col = 0; col < 3; ++col) {
-                if(row === col) {
-                  sum2 += (result[row * 3 + col] - 1) * ( result[row * 3 + col] - 1 );
-                } else {
-                  sum2 +=  result[row * 3 + col]      *   result[row * 3 + col];
-                }
-              }
 
-            }`
-          console.assert(sum2 < 0.00001);
-#          debugger
+        palm.children[1].pip.matrix.elements = leapHand.indexFinger.medial.localMatrix()
+        palm.children[1].pip.quaternion.setFromRotationMatrix(
+          palm.children[1].pip.matrix
+        )
 
-#        isOronormal(sourceChildBasis)
-#        isOronormal(sourceParentBasis)
-        isOronormal(targetChildBasis)
+        palm.children[1].dip.matrix.elements = leapHand.indexFinger.medial.localMatrix()
+        palm.children[1].dip.quaternion.setFromRotationMatrix(
+          palm.children[1].dip.matrix
+        )
 
-        targetChildMatrix.elements.map = Array.prototype.map
-#        document.getElementById('debug').innerHTML = targetChildMatrix.elements.map((e) -> return e.toPrecision(4))
 
-        arrow3.setRotationFromMatrix(
-          targetChildMatrix
-        );
-        arrow3.quaternion
 
-        palm.children[1].mcp.matrix = arrow3.matrix
-        palm.children[1].mcp.quaternion.setFromRotationMatrix(targetChildMatrix)
+        palm.children[0].mcp.matrix.elements = leapHand.thumb.proximal.localMatrix()
+        palm.children[0].mcp.quaternion.setFromRotationMatrix(
+          palm.children[0].mcp.matrix
+        )
 
-        document.getElementById('debug').innerHTML = palm.children[0].mcp.quaternion.toArray().map((e) -> return e.toPrecision(4))
+        palm.children[0].pip.matrix.elements = leapHand.thumb.medial.localMatrix()
+        palm.children[0].pip.quaternion.setFromRotationMatrix(
+          palm.children[0].pip.matrix
+        )
+
+        palm.children[0].dip.matrix.elements = leapHand.thumb.medial.localMatrix()
+        palm.children[0].dip.quaternion.setFromRotationMatrix(
+          palm.children[0].dip.matrix
+        )
 
         scope.positionDots(leapHand, handMesh, offset)
 
