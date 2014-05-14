@@ -324,7 +324,7 @@ Leap.plugin 'riggedHand', (scope = {})->
   zeroVector = new THREE.Vector3(0,0,0)
   
   addMesh = (leapHand)->
-    console.time 'addMesh'
+#    console.time 'addMesh'
 
     handMesh = getMesh(leapHand)
 
@@ -380,7 +380,7 @@ Leap.plugin 'riggedHand', (scope = {})->
 
     controller.emit('riggedHand.meshAdded', handMesh, leapHand)
 
-    console.timeEnd 'addMesh'
+#    console.timeEnd 'addMesh'
 
 
   removeMesh = (leapHand)->

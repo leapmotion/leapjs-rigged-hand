@@ -457,7 +457,6 @@ var _sortBy = function (obj, iterator, context) {
     zeroVector = new THREE.Vector3(0, 0, 0);
     addMesh = function(leapHand) {
       var handMesh, palm, rigFinger, _i, _len, _ref;
-      console.time('addMesh');
       handMesh = getMesh(leapHand);
       scope.parent.add(handMesh);
       leapHand.data('riggedHand.mesh', handMesh);
@@ -495,8 +494,7 @@ var _sortBy = function (obj, iterator, context) {
           return document.body.appendChild(handMesh.boneLabels[bone.id]);
         });
       }
-      controller.emit('riggedHand.meshAdded', handMesh, leapHand);
-      return console.timeEnd('addMesh');
+      return controller.emit('riggedHand.meshAdded', handMesh, leapHand);
     };
     removeMesh = function(leapHand) {
       var handMesh;
