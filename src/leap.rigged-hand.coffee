@@ -132,8 +132,6 @@ initScene = (element)->
   scope = @
   @scene = new THREE.Scene()
 
-  @scene.add new THREE.AmbientLight(0x888888)
-
   pointLight = new THREE.PointLight(0xFFffff)
   pointLight.position = new THREE.Vector3(-20, 10, 0)
   pointLight.lookAt new THREE.Vector3(0, 0, 0)

@@ -1,5 +1,5 @@
 /*                    
- * LeapJS Rigged Hand - v0.1.4-beta1 - 2014-05-12                    
+ * LeapJS Rigged Hand - v0.1.4-beta1 - 2014-05-13                    
  * http://github.com/leapmotion/leapjs-rigged-hand/                    
  *                    
  * Copyright 2014 LeapMotion, Inc                    
