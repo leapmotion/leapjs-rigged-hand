@@ -1,5 +1,5 @@
 /*                    
- * LeapJS Rigged Hand - v0.1.4-beta1 - 2014-05-13                    
+ * LeapJS Rigged Hand - v0.1.4 - 2014-05-14                    
  * http://github.com/leapmotion/leapjs-rigged-hand/                    
  *                    
  * Copyright 2014 LeapMotion, Inc                    
@@ -302,7 +302,6 @@ var _sortBy = function (obj, iterator, context) {
     var pointLight, scope;
     scope = this;
     this.scene = new THREE.Scene();
-    this.scene.add(new THREE.AmbientLight(0x888888));
     pointLight = new THREE.PointLight(0xFFffff);
     pointLight.position = new THREE.Vector3(-20, 10, 0);
     pointLight.lookAt(new THREE.Vector3(0, 0, 0));
