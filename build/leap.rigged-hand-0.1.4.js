@@ -1,5 +1,5 @@
 /*                    
- * LeapJS Rigged Hand - v0.1.4 - 2014-05-14                    
+ * LeapJS Rigged Hand - v0.1.4 - 2014-05-20                    
  * http://github.com/leapmotion/leapjs-rigged-hand/                    
  *                    
  * Copyright 2014 LeapMotion, Inc                    
@@ -271,7 +271,61 @@ var _sortBy = function (obj, iterator, context) {
     }
     return left.index - right.index;
   }), 'value');
-};
+}
+
+
+// http://stackoverflow.com/questions/6902280/cross-browser-dom-ready
+function bindReady(handler){
+    var called = false
+    function ready() {
+        if (called) return
+        called = true
+        handler()
+    }
+    if ( document.addEventListener ) {
+        document.addEventListener( "DOMContentLoaded", function(){
+            ready()
+        }, false )
+    } else if ( document.attachEvent ) {
+        if ( document.documentElement.doScroll && window == window.top ) {
+            function tryScroll(){
+                if (called) return
+                if (!document.body) return
+                try {
+                    document.documentElement.doScroll("left")
+                    ready()
+                } catch(e) {
+                    setTimeout(tryScroll, 0)
+                }
+            }
+            tryScroll()
+        }
+        document.attachEvent("onreadystatechange", function(){
+            if ( document.readyState === "complete" ) {
+                ready()
+            }
+        })
+    }
+    if (window.addEventListener)
+        window.addEventListener('load', ready, false)
+    else if (window.attachEvent)
+        window.attachEvent('onload', ready)
+    /*  else  // use this 'else' statement for very old browsers :)
+        window.onload=ready
+    */
+}
+readyList = []
+function onReady(handler) {
+    if (!readyList.length) {
+        bindReady(function() {
+            for(var i=0; i<readyList.length; i++) {
+                readyList[i]()
+            }
+        })
+    }
+    readyList.push(handler)
+}
+;
   var initScene;
 
   if (!THREE.Quaternion.prototype.setFromVectors) {
@@ -320,7 +374,6 @@ var _sortBy = function (obj, iterator, context) {
       this.renderer.domElement.style.left = 0;
       this.renderer.domElement.style.width = '100%';
       this.renderer.domElement.style.height = '100%';
-      element.appendChild(this.renderer.domElement);
       window.addEventListener('resize', function() {
         scope.camera.aspect = window.innerWidth / window.innerHeight;
         scope.camera.updateProjectionMatrix();
@@ -333,7 +386,8 @@ var _sortBy = function (obj, iterator, context) {
   };
 
   Leap.plugin('riggedHand', function(scope) {
-    var addMesh, basicDotMesh, controller, createMesh, dots, getMesh, projector, removeMesh, spareMeshes, zeroVector;
+    var addMesh, basicDotMesh, controller, createMesh, dots, getMesh, projector, removeMesh, spareMeshes, zeroVector,
+      _this = this;
     if (scope == null) {
       scope = {};
     }
@@ -358,8 +412,11 @@ var _sortBy = function (obj, iterator, context) {
       }
     }
     if (!scope.parent) {
-      scope.initScene(document.body);
+      scope.initScene();
       scope.parent = scope.scene;
+      onReady(function() {
+        return document.body.appendChild(scope.renderer.domElement);
+      });
     }
     scope.renderFn || (scope.renderFn = function() {
       return scope.renderer.render(scope.scene, scope.camera);
