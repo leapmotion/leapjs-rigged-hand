@@ -183,6 +183,8 @@ Leap.plugin 'riggedHand', (scope = {})->
     scope.initScene(document.body)
     scope.parent = scope.scene
 
+  scope.scene = scope.parent
+
   scope.renderFn ||= ->
     scope.renderer.render(scope.scene, scope.camera)
 
@@ -197,6 +199,8 @@ Leap.plugin 'riggedHand', (scope = {})->
   # converts a ThreeJS JSON blob in to a mesh
   # this should be converted to a subclass of SkinnedMesh which still responds to isntanceof SkinnedMesh
   createMesh = (JSON)->
+    console.log('rigs', rigs);
+
     # note: this causes a good 90ms pause on first run
     # it appears as if mesh.clone does not clone material and geometry, so at this point we refrain from doing so
     # see THREE.SkinnedMesh.prototype.clone
@@ -213,18 +217,19 @@ Leap.plugin 'riggedHand', (scope = {})->
     _extend(data.materials[0], scope.materialOptions)
     _extend(data.geometry,     scope.geometryOptions)
     handMesh = new THREE.SkinnedMesh(data.geometry, data.materials[0])
-    handMesh.scale.multiplyScalar(scope.scale * 50)
+    handMesh.scale.multiplyScalar(scope.scale)
     handMesh.castShadow = true
     handMesh.positionRaw = new THREE.Vector3
 
     handMesh.palm = handMesh.children[0].children[0].children[0]
+    # handMesh.palm = handMesh.children[0]#.children[0].children[0]
     handMesh.fingers = handMesh.palm.children
 
     # our mesh comes with the fingers out of order
     # this should be removed in future versions of the mesh :-/
     thumb = handMesh.fingers.splice(1,1)
     handMesh.fingers.unshift(thumb[0])
-#    console.log "Mesh fingers:", handMesh.fingers.map( (finger)-> finger.name )
+    console.log "Mesh fingers:", handMesh.fingers.map( (finger)-> finger.name )
 
 
 
@@ -303,11 +308,8 @@ Leap.plugin 'riggedHand', (scope = {})->
     if meshes.length > 0
       handMesh = meshes.pop()
     else
-      if leapHand.type == 'right'
-        console.warn "right rig not available"
-      else
-        JSON = rigs[leapHand.type]
-        handMesh = createMesh(JSON)
+      JSON = rigs[leapHand.type]
+      handMesh = createMesh(JSON)
 
     handMesh
 
@@ -315,39 +317,39 @@ Leap.plugin 'riggedHand', (scope = {})->
 
   # initialize JSONloader for speed
 
-  mesh = createMesh(rigs['left'])
+  # mesh = createMesh(rigs['right'])
+  if false && mesh
+    window.fatArrow = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 0, 0 ), 4, 0x000000, 0.5, 0.5)
+    fatArrow.position = mesh.position
+    scope.scene.add(window.fatArrow)
 
-  window.fatArrow = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 0, 0 ), 4, 0x000000, 0.5, 0.5)
-  fatArrow.position = mesh.position
-  scope.scene.add(window.fatArrow)
+    window.fatArrow2 = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 0, 0 ), 4, 0x000000, 0.5, 0.5)
+    fatArrow2.position = mesh.position
+    scope.scene.add(window.fatArrow2)
 
-  window.fatArrow2 = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 0, 0 ), 4, 0x000000, 0.5, 0.5)
-  fatArrow2.position = mesh.position
-  scope.scene.add(window.fatArrow2)
+    window.fatArrow3 = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 0, 0 ), 4, 0xff0000, 0.5, 0.5)
+    fatArrow3.position = mesh.position
+    scope.scene.add(window.fatArrow3)
 
-  window.fatArrow3 = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 0, 0 ), 4, 0xff0000, 0.5, 0.5)
-  fatArrow3.position = mesh.position
-  scope.scene.add(window.fatArrow3)
+    window.arrow = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 0, 0 ), 4, 0x000000)
+    arrow.position = mesh.position
+    scope.scene.add(window.arrow)
 
-  window.arrow = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 0, 0 ), 4, 0x000000)
-  arrow.position = mesh.position
-  scope.scene.add(window.arrow)
+    window.arrow2 = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 0, 0 ), 4, 0x660000)
+    arrow2.position = mesh.position
+    scope.scene.add(window.arrow2)
 
-  window.arrow2 = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 0, 0 ), 4, 0x660000)
-  arrow2.position = mesh.position
-  scope.scene.add(window.arrow2)
+    window.arrow3 = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 0, 0 ), 4, 0xff6600)
+    arrow3.position = mesh.position
+    scope.scene.add(window.arrow3)
 
-  window.arrow3 = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 0, 0 ), 4, 0xff6600)
-  arrow3.position = mesh.position
-  scope.scene.add(window.arrow3)
-
-  window.arrow4 = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 0, 0 ), 4, 0x0000ff)
-  arrow4.position = mesh.position
-  scope.scene.add(window.arrow4)
+    window.arrow4 = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 0, 0 ), 4, 0x0000ff)
+    arrow4.position = mesh.position
+    scope.scene.add(window.arrow4)
 
 
 #  scope.scene.add(mesh)
-  sphere.position = mesh.position
+#  sphere.position = mesh.position
   window.camera = scope.camera
 
 
@@ -357,14 +359,16 @@ Leap.plugin 'riggedHand', (scope = {})->
       @fromArray(array).divideScalar(scale).add(offset || scope.offset)
 
   zeroVector = new THREE.Vector3(0,0,0)
-  
+
   addMesh = (leapHand)->
     console.time 'addMesh'
 
     handMesh = getMesh(leapHand)
+    console.assert(handMesh)
 
     scope.parent.add handMesh
     leapHand.data('riggedHand.mesh', handMesh)
+    console.log('adding mesh', handMesh)
     palm = handMesh.palm
 
     # Mesh scale set by comparing leap first bone length to mesh first bone length
@@ -455,7 +459,7 @@ Leap.plugin 'riggedHand', (scope = {})->
     new THREE.IcosahedronGeometry( .3 , 1 ),
     new THREE.MeshNormalMaterial()
   )
-  
+
   scope.positionDots = (leapHand, handMesh, offset)->
     return unless scope.dotsMode
 
@@ -519,6 +523,8 @@ Leap.plugin 'riggedHand', (scope = {})->
 
         handMesh.positionRaw.fromLeap(leapHand.palmPosition, handMesh.leapScale, offset)
         handMesh.position.copy(handMesh.positionRaw).multiplyScalar(scope.positionScale)
+
+#        handMesh.position.set(0,0,0)
 
 
         handMesh.matrix.lookAt(palm.worldDirection, zeroVector, palm.up)

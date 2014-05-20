@@ -55,7 +55,7 @@ module.exports = (grunt) ->
     concat: {
       build: {
 #        src: ['src/lib/*.js', 'src/models/*.js', 'build/' + filename + '.js'],
-        src: ['src/lib/*.js', 'src/models/left-hand.js', 'build/' + filename + '.js'],
+        src: ['src/lib/*.js', 'src/models/left_hand_zeroed_rotated.js', 'build/' + filename + '.js'],
         dest: 'build/' + filename + '.js'
         options: {
           banner: ";(function( window, undefined ){\n\n",
@@ -126,11 +126,15 @@ module.exports = (grunt) ->
     'string-replace'
   ]);
 
-  grunt.registerTask('default', [
+  grunt.registerTask('no-uglify', [
     'clean',
     'coffee',
     'concat',
-    'string-replace',
+    'string-replace'
+  ]);
+
+  grunt.registerTask('default', [
+    'no-uglify',
     'uglify',
     'usebanner'
   ]);
