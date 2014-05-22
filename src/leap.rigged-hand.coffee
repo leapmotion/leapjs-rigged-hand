@@ -151,6 +151,8 @@ function onReady(handler) {
 }
 `
 
+fiveFingerBones = false
+
 
 # Creates the default ThreeJS scene if no parent passed in.
 initScene = (element)->
@@ -265,7 +267,7 @@ Leap.plugin 'riggedHand', (scope = {})->
     data = (new THREE.JSONLoader).parse JSON
     data.materials[0].skinning = true
     data.materials[0].transparent = true
-    data.materials[0].opacity = 0.7
+    data.materials[0].opacity = 1
     data.materials[0].emissive.setHex(0x888888)
 
     data.materials[0].vertexColors = THREE.VertexColors
@@ -278,14 +280,20 @@ Leap.plugin 'riggedHand', (scope = {})->
     handMesh.castShadow = true
     handMesh.positionRaw = new THREE.Vector3
 
+
+    # for use with terrence's meshes:
     handMesh.palm = handMesh.children[0].children[0].children[0]
-    # handMesh.palm = handMesh.children[0]#.children[0].children[0]
+
+    # for use with smessimer's
+    handMesh.palm = handMesh.children[0]
     handMesh.fingers = handMesh.palm.children
 
     # our mesh comes with the fingers out of order
     # this should be removed in future versions of the mesh :-/
-    thumb = handMesh.fingers.splice(1,1)
-    handMesh.fingers.unshift(thumb[0])
+
+
+#    thumb = handMesh.fingers.splice(1,1)
+#    handMesh.fingers.unshift(thumb[0])
     console.log "Mesh fingers:", handMesh.fingers.map( (finger)-> finger.name )
 
 
@@ -445,10 +453,13 @@ Leap.plugin 'riggedHand', (scope = {})->
     for rigFinger, i in handMesh.fingers
 
       # thumb is index 1 and has one less bone
-      if i == 0
-        rigFinger.mcp = rigFinger
+      if fiveFingerBones
+        if i == 0
+          rigFinger.mcp = rigFinger
+        else
+          rigFinger.mcp = rigFinger.children[0]
       else
-        rigFinger.mcp = rigFinger.children[0]
+        rigFinger.mcp = rigFinger
 
       rigFinger.pip = rigFinger.mcp.children[0]
       rigFinger.dip = rigFinger.pip.children[0]
@@ -513,7 +524,7 @@ Leap.plugin 'riggedHand', (scope = {})->
   # for use when dotsMode = true
   dots = {}
   basicDotMesh = new THREE.Mesh(
-    new THREE.IcosahedronGeometry( .3 , 1 ),
+    new THREE.IcosahedronGeometry( .2 , 1 ),
     new THREE.MeshNormalMaterial()
   )
 
@@ -605,6 +616,8 @@ Leap.plugin 'riggedHand', (scope = {})->
 
 
 
+        # index Finger
+
         # skinmatrix here instead?
         palm.children[1].mcp.matrix.elements = leapHand.indexFinger.proximal.localMatrix()
         palm.children[1].mcp.quaternion.setFromRotationMatrix(
@@ -624,6 +637,9 @@ Leap.plugin 'riggedHand', (scope = {})->
 
 
 
+
+        # thumb
+
         palm.children[0].mcp.matrix.elements = leapHand.thumb.proximal.localMatrix()
         palm.children[0].mcp.quaternion.setFromRotationMatrix(
           palm.children[0].mcp.matrix
@@ -638,6 +654,8 @@ Leap.plugin 'riggedHand', (scope = {})->
         palm.children[0].dip.quaternion.setFromRotationMatrix(
           palm.children[0].dip.matrix
         )
+
+
 
         scope.positionDots(leapHand, handMesh, offset)
 
