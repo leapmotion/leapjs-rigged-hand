@@ -95,15 +95,67 @@ var _sortBy = function (obj, iterator, context) {
     }
     return left.index - right.index;
   }), 'value');
-}`
+}
+
+
+// http://stackoverflow.com/questions/6902280/cross-browser-dom-ready
+function bindReady(handler){
+    var called = false
+    function ready() {
+        if (called) return
+        called = true
+        handler()
+    }
+    if ( document.addEventListener ) {
+        document.addEventListener( "DOMContentLoaded", function(){
+            ready()
+        }, false )
+    } else if ( document.attachEvent ) {
+        if ( document.documentElement.doScroll && window == window.top ) {
+            function tryScroll(){
+                if (called) return
+                if (!document.body) return
+                try {
+                    document.documentElement.doScroll("left")
+                    ready()
+                } catch(e) {
+                    setTimeout(tryScroll, 0)
+                }
+            }
+            tryScroll()
+        }
+        document.attachEvent("onreadystatechange", function(){
+            if ( document.readyState === "complete" ) {
+                ready()
+            }
+        })
+    }
+    if (window.addEventListener)
+        window.addEventListener('load', ready, false)
+    else if (window.attachEvent)
+        window.attachEvent('onload', ready)
+    /*  else  // use this 'else' statement for very old browsers :)
+        window.onload=ready
+    */
+}
+readyList = []
+function onReady(handler) {
+    if (!readyList.length) {
+        bindReady(function() {
+            for(var i=0; i<readyList.length; i++) {
+                readyList[i]()
+            }
+        })
+    }
+    readyList.push(handler)
+}
+`
 
 
 # Creates the default ThreeJS scene if no parent passed in.
 initScene = (element)->
   scope = @
   @scene = new THREE.Scene()
-
-  @scene.add new THREE.AmbientLight(0x888888)
 
   pointLight = new THREE.PointLight(0xFFffff)
   pointLight.position = new THREE.Vector3(-20, 10, 0)
@@ -137,7 +189,6 @@ initScene = (element)->
     @renderer.domElement.style.left = 0
     @renderer.domElement.style.width = '100%'
     @renderer.domElement.style.height = '100%'
-    element.appendChild(@renderer.domElement)
 
     window.addEventListener( 'resize', ->
       scope.camera.aspect = window.innerWidth / window.innerHeight
@@ -180,10 +231,16 @@ Leap.plugin 'riggedHand', (scope = {})->
 
 
   unless scope.parent
-    scope.initScene(document.body)
+
+    scope.initScene()
     scope.parent = scope.scene
 
+
+    onReady =>
+      document.body.appendChild(scope.renderer.domElement)
+
   scope.scene = scope.parent
+
 
   scope.renderFn ||= ->
     scope.renderer.render(scope.scene, scope.camera)
@@ -361,7 +418,7 @@ Leap.plugin 'riggedHand', (scope = {})->
   zeroVector = new THREE.Vector3(0,0,0)
 
   addMesh = (leapHand)->
-    console.time 'addMesh'
+#    console.time 'addMesh'
 
     handMesh = getMesh(leapHand)
     console.assert(handMesh)
@@ -434,7 +491,7 @@ Leap.plugin 'riggedHand', (scope = {})->
 
     controller.emit('riggedHand.meshAdded', handMesh, leapHand)
 
-    console.timeEnd 'addMesh'
+#    console.timeEnd 'addMesh'
 
 
   removeMesh = (leapHand)->

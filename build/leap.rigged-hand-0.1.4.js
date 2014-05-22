@@ -1,3 +1,23 @@
+/*                    
+ * LeapJS Rigged Hand - v0.1.4 - 2014-05-22                    
+ * http://github.com/leapmotion/leapjs-rigged-hand/                    
+ *                    
+ * Copyright 2014 LeapMotion, Inc                    
+ *                    
+ * Licensed under the Apache License, Version 2.0 (the "License");                    
+ * you may not use this file except in compliance with the License.                    
+ * You may obtain a copy of the License at                    
+ *                    
+ *     http://www.apache.org/licenses/LICENSE-2.0                    
+ *                    
+ * Unless required by applicable law or agreed to in writing, software                    
+ * distributed under the License is distributed on an "AS IS" BASIS,                    
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.                    
+ * See the License for the specific language governing permissions and                    
+ * limitations under the License.                    
+ *                    
+ */                    
+
 ;(function( window, undefined ){
 
 /**
@@ -202,13 +222,66 @@ var _sortBy = function (obj, iterator, context) {
     }
     return left.index - right.index;
   }), 'value');
-};
+}
+
+
+// http://stackoverflow.com/questions/6902280/cross-browser-dom-ready
+function bindReady(handler){
+    var called = false
+    function ready() {
+        if (called) return
+        called = true
+        handler()
+    }
+    if ( document.addEventListener ) {
+        document.addEventListener( "DOMContentLoaded", function(){
+            ready()
+        }, false )
+    } else if ( document.attachEvent ) {
+        if ( document.documentElement.doScroll && window == window.top ) {
+            function tryScroll(){
+                if (called) return
+                if (!document.body) return
+                try {
+                    document.documentElement.doScroll("left")
+                    ready()
+                } catch(e) {
+                    setTimeout(tryScroll, 0)
+                }
+            }
+            tryScroll()
+        }
+        document.attachEvent("onreadystatechange", function(){
+            if ( document.readyState === "complete" ) {
+                ready()
+            }
+        })
+    }
+    if (window.addEventListener)
+        window.addEventListener('load', ready, false)
+    else if (window.attachEvent)
+        window.attachEvent('onload', ready)
+    /*  else  // use this 'else' statement for very old browsers :)
+        window.onload=ready
+    */
+}
+readyList = []
+function onReady(handler) {
+    if (!readyList.length) {
+        bindReady(function() {
+            for(var i=0; i<readyList.length; i++) {
+                readyList[i]()
+            }
+        })
+    }
+    readyList.push(handler)
+}
+;
 
   initScene = function(element) {
     var geometry, material, pointLight, scope;
     scope = this;
     this.scene = new THREE.Scene();
-    this.scene.add(new THREE.AmbientLight(0x888888));
     pointLight = new THREE.PointLight(0xFFffff);
     pointLight.position = new THREE.Vector3(-20, 10, 0);
     pointLight.lookAt(new THREE.Vector3(0, 0, 0));
@@ -235,7 +308,6 @@ var _sortBy = function (obj, iterator, context) {
       this.renderer.domElement.style.left = 0;
       this.renderer.domElement.style.width = '100%';
       this.renderer.domElement.style.height = '100%';
-      element.appendChild(this.renderer.domElement);
       window.addEventListener('resize', function() {
         scope.camera.aspect = window.innerWidth / window.innerHeight;
         scope.camera.updateProjectionMatrix();
@@ -248,7 +320,8 @@ var _sortBy = function (obj, iterator, context) {
   };
 
   Leap.plugin('riggedHand', function(scope) {
-    var addMesh, basicDotMesh, controller, createMesh, dots, getMesh, projector, removeMesh, spareMeshes, zeroVector;
+    var addMesh, basicDotMesh, controller, createMesh, dots, getMesh, projector, removeMesh, spareMeshes, zeroVector,
+      _this = this;
     if (scope == null) {
       scope = {};
     }
@@ -273,8 +346,11 @@ var _sortBy = function (obj, iterator, context) {
       }
     }
     if (!scope.parent) {
-      scope.initScene(document.body);
+      scope.initScene();
       scope.parent = scope.scene;
+      onReady(function() {
+        return document.body.appendChild(scope.renderer.domElement);
+      });
     }
     scope.scene = scope.parent;
     scope.renderFn || (scope.renderFn = function() {
@@ -404,7 +480,6 @@ var _sortBy = function (obj, iterator, context) {
     zeroVector = new THREE.Vector3(0, 0, 0);
     addMesh = function(leapHand) {
       var handMesh, i, palm, rigFinger, _i, _len, _ref;
-      console.time('addMesh');
       handMesh = getMesh(leapHand);
       console.assert(handMesh);
       scope.parent.add(handMesh);
@@ -454,8 +529,7 @@ var _sortBy = function (obj, iterator, context) {
           return document.body.appendChild(handMesh.boneLabels[bone.id]);
         });
       }
-      controller.emit('riggedHand.meshAdded', handMesh, leapHand);
-      return console.timeEnd('addMesh');
+      return controller.emit('riggedHand.meshAdded', handMesh, leapHand);
     };
     removeMesh = function(leapHand) {
       var handMesh;
