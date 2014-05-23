@@ -30,6 +30,10 @@ module.exports = (grunt) ->
           spawn: false,
         },
       },
+      grunt: {
+        files: ['Gruntfile.coffee'],
+        tasks: ['default-no-uglify']
+      }
     },
     coffee:
       build:
