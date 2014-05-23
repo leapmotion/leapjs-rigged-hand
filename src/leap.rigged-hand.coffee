@@ -391,6 +391,9 @@ Leap.plugin 'riggedHand', (scope = {})->
     leapHand.data('riggedHand.mesh', handMesh)
     palm = handMesh.children[0]
 
+    handMesh.helper = new THREE.SkeletonHelper( handMesh )
+    scope.parent.add handMesh.helper
+
     # Mesh scale set by comparing leap first bone length to mesh first bone length
     handMesh.leapScale =
       (new THREE.Vector3).subVectors(
@@ -447,6 +450,12 @@ Leap.plugin 'riggedHand', (scope = {})->
     leapHand.data('riggedHand.mesh', null)
 
     scope.parent.remove handMesh
+
+    # this should really emit events for add/remove, and not be in one ugly global callback
+    if handMesh.helper
+      scope.parent.remove handMesh.helper
+      handMesh.helper = null
+
 
     spareMeshes[leapHand.type].push(handMesh)
 
@@ -520,6 +529,8 @@ Leap.plugin 'riggedHand', (scope = {})->
             if bone.children[0]
               bone.worldDirection.subVectors(bone.children[0].positionLeap, bone.positionLeap).normalize()
               bone.positionFromWorld(bone.children[0].positionLeap, bone.positionLeap)
+
+        handMesh.helper.update()
 
         scope.positionDots(leapHand, handMesh, offset)
 
