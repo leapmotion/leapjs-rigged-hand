@@ -119,8 +119,22 @@ module.exports = (grunt) ->
         src: ["build/#{filename}.js", "build/#{filename}.min.js"]
       }
     }
+    connect: {
+      server: {
+        options: {
+          port: 8000
+        }
+      }
+    }
 
   require('load-grunt-tasks')(grunt);
+
+
+  grunt.registerTask('serve', [
+    'default-no-uglify',
+    'connect',
+    'watch',
+  ]);
 
   grunt.registerTask('default-no-uglify', [
     'clean',
