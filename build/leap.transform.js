@@ -42,7 +42,11 @@
       _results = [];
       for (_i = 0, _len = vec3s.length; _i < _len; _i++) {
         vec3 = vec3s[_i];
-        _results.push(Leap.vec3.transformMat4(vec3, vec3, matrix));
+        if (vec3) {
+          _results.push(Leap.vec3.transformMat4(vec3, vec3, matrix));
+        } else {
+          _results.push(void 0);
+        }
       }
       return _results;
     };
@@ -62,7 +66,11 @@
       _results = [];
       for (_i = 0, _len = vec3s.length; _i < _len; _i++) {
         vec3 = vec3s[_i];
-        _results.push(transformMat4Implicit0(vec3, vec3, matrix));
+        if (vec3) {
+          _results.push(transformMat4Implicit0(vec3, vec3, matrix));
+        } else {
+          _results.push(void 0);
+        }
       }
       return _results;
     };
