@@ -230,7 +230,7 @@ Leap.plugin 'riggedHand', (scope = {})->
   @use('versionCheck', {requiredProtocolVersion: 6})
 
   scope.offset ||= new THREE.Vector3(0,-10,0)
-  scope.scale ||= 1
+  scope.scale ||= 100
   # this allow the hand to move disproportionately to its size.
   scope.positionScale ||= 1
   scope.initScene = initScene
@@ -356,6 +356,14 @@ Leap.plugin 'riggedHand', (scope = {})->
         .sub(handMesh.positionRaw)
         .add(handMesh.position)
 
+    # Mesh scale set by comparing leap first bone length to mesh first bone length
+    handMesh.scaleFromHand = (leapHand) ->
+
+      handMesh.leapScale = (new THREE.Vector3).subVectors(
+          (new THREE.Vector3).fromArray(leapHand.fingers[2].pipPosition)
+          (new THREE.Vector3).fromArray(leapHand.fingers[2].mcpPosition)
+        ).length() / handMesh.fingers[2].children[0].position.length() / scope.scale
+
     handMesh
 
   getMesh = (leapHand)->
@@ -393,13 +401,6 @@ Leap.plugin 'riggedHand', (scope = {})->
 
     handMesh.helper = new THREE.SkeletonHelper( handMesh )
     scope.parent.add handMesh.helper
-
-    # Mesh scale set by comparing leap first bone length to mesh first bone length
-    handMesh.leapScale =
-      (new THREE.Vector3).subVectors(
-        (new THREE.Vector3).fromArray(leapHand.fingers[2].pipPosition)
-        (new THREE.Vector3).fromArray(leapHand.fingers[2].mcpPosition)
-      ).length() / handMesh.fingers[2].position.length() / scope.scale
 
     # Initialize Vectors for later use
     # actually we need the above so that position is factored in
@@ -468,22 +469,32 @@ Leap.plugin 'riggedHand', (scope = {})->
     scope.renderFn() if scope.renderFn
 
   # for use when dotsMode = true
-  dots = {}
+  scope.dots = {}
   basicDotMesh = new THREE.Mesh(
-    new THREE.IcosahedronGeometry( .3 , 1 ),
+    new THREE.IcosahedronGeometry( .1 , 1 ),
     new THREE.MeshNormalMaterial()
   )
-  
+
+
   scope.positionDots = (leapHand, handMesh, offset)->
     return unless scope.dotsMode
 
-    for leapFinger, i in leapHand.fingers
-      for point in ['mcp', 'pip', 'dip', 'tip']
-        unless dots["#{point}-#{i}"]
-          dots["#{point}-#{i}"] = basicDotMesh.clone()
-          scope.parent.add dots["#{point}-#{i}"]
+    unless scope.dots["palmPosition"]
+      scope.dots["palmPosition"] = new THREE.Mesh(
+        new THREE.IcosahedronGeometry( .4 , 1 ),
+        new THREE.MeshNormalMaterial()
+      )
+      scope.parent.add scope.dots["palmPosition"]
 
-        handMesh.scenePosition(leapFinger["#{point}Position"], dots["#{point}-#{i}"].position, offset)
+    handMesh.scenePosition(leapHand["palmPosition"], scope.dots["palmPosition"].position, offset)
+
+    for leapFinger, i in leapHand.fingers
+      for point in ['carp', 'mcp', 'pip', 'dip', 'tip']
+        unless scope.dots["#{point}-#{i}"]
+          scope.dots["#{point}-#{i}"] = basicDotMesh.clone()
+          scope.parent.add scope.dots["#{point}-#{i}"]
+
+        handMesh.scenePosition(leapFinger["#{point}Position"], scope.dots["#{point}-#{i}"].position, offset)
 
   @on 'handFound', addMesh
   @on 'handLost',  removeMesh
@@ -492,12 +503,16 @@ Leap.plugin 'riggedHand', (scope = {})->
 
   {
     frame: (frame)->
+
       scope.stats.begin() if scope.stats
       for leapHand in frame.hands
+
         # this works around a subtle bug where non-extended fingers would appear after extended ones
         leapHand.fingers = _sortBy(leapHand.fingers, (finger)-> finger.id)
         handMesh = leapHand.data('riggedHand.mesh')
         palm = handMesh.children[0]
+
+        handMesh.scaleFromHand(leapHand)
 
         palm.positionLeap.fromArray(leapHand.palmPosition)
         # wrist -> mcp -> pip -> dip -> tip
