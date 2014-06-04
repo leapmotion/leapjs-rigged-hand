@@ -35,6 +35,7 @@ Automatically adds or removes hand meshes to/from the scene as they come in to o
   .use('riggedHand', {
     parent: scene
 
+    # this is called on every animationFrame 
     renderFn: ->
       renderer.render(scene, camera)
       # Here we update the camera controls for clicking and rotating
