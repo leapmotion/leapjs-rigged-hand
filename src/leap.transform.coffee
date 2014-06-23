@@ -94,6 +94,7 @@ Leap.plugin 'transform', (scope = {})->
       for finger in hand.fingers
         transformPositions(
           matrix,
+          finger.carpPosition,
           finger.mcpPosition,
           finger.pipPosition,
           finger.dipPosition,

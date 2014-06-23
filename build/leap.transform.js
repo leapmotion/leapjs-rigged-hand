@@ -84,7 +84,7 @@
         _results = [];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           finger = _ref[_i];
-          transformPositions(matrix, finger.mcpPosition, finger.pipPosition, finger.dipPosition, finger.tipPosition);
+          transformPositions(matrix, finger.carpPosition, finger.mcpPosition, finger.pipPosition, finger.dipPosition, finger.tipPosition);
           _results.push(transformDirections(matrix, finger.direction));
         }
         return _results;
