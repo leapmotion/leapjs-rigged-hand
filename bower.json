@@ -1,0 +1,25 @@
+{
+  "name": "leapjs-rigged-hand",
+  "version": "0.1.4",
+  "homepage": "https://github.com/leapmotion/leapjs-rigged-hand",
+  "authors": [
+    "Peter Ehrlich <peter.i.ehrlich@gmail.com>"
+  ],
+  "description": "A live skinned hand for the Leap Motion Controller",
+  "main": "./build/leap.rigged-hand-0.1.4.js",
+  "keywords": [
+    "leap",
+    "leapmotion",
+    "skinned",
+    "rigged",
+    "hand"
+  ],
+  "license": "Apache-2.0",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
