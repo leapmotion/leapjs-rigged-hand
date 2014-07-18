@@ -169,8 +169,3 @@ controller.on 'frame', (frame)->
     cursor.style.left = screenPosition.x
     cursor.style.bottom = screenPosition.y
 ```
-
-## Contributing
-
-If you're receiving this as a zip and want to make changes, access issues, or get the latest code, contact
-pehrlich@leapmotion.com to be added to the github repo.
