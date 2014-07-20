@@ -58,7 +58,7 @@ module.exports = (grunt) ->
         }]
     concat: {
       build: {
-        src: ['src/lib/*.js', 'src/models/left_hand_terrence_3.js', 'build/' + filename + '.js'],
+        src: ['src/lib/*.js', 'src/models/hand_models_v1.js', 'build/' + filename + '.js'],
         dest: 'build/' + filename + '.js'
         options: {
           banner: ";(function( window, undefined ){\n\n",

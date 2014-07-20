@@ -230,7 +230,7 @@ Leap.plugin 'riggedHand', (scope = {})->
   @use('versionCheck', {requiredProtocolVersion: 6})
 
   scope.offset ||= new THREE.Vector3(0,-10,0)
-  scope.scale ||= 100
+  scope.scale ||= 1
   # this allow the hand to move disproportionately to its size.
   scope.positionScale ||= 1
   scope.initScene = initScene
