@@ -454,8 +454,8 @@ function onReady(handler) {
         var camera, height, screenPosition, width;
         camera = scope.camera;
         console.assert(camera instanceof THREE.Camera, "screenPosition expects camera, got", camera);
-        width = scope.renderer.domElement.width;
-        height = scope.renderer.domElement.height;
+        width = parseInt(scope.renderer.domElement.style.width, 10);
+        height = parseInt(scope.renderer.domElement.style.height, 10);
         console.assert(width && height);
         screenPosition = new THREE.Vector3();
         if (position instanceof THREE.Vector3) {
