@@ -328,8 +328,8 @@ Leap.plugin 'riggedHand', (scope = {})->
       camera = scope.camera
       console.assert(camera instanceof THREE.Camera, "screenPosition expects camera, got", camera);
 
-      width =  parseInt(scope.renderer.domElement.style.width,  10)
-      height = parseInt(scope.renderer.domElement.style.height, 10)
+      width =  parseInt(window.getComputedStyle(scope.renderer.domElement).width,  10)
+      height = parseInt(window.getComputedStyle(scope.renderer.domElement).height, 10)
       console.assert(width && height);
 
       screenPosition = (new THREE.Vector3())

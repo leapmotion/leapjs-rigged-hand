@@ -1,3 +1,23 @@
+/*                    
+ * LeapJS Rigged Hand - v0.1.4 - 2014-07-19                    
+ * http://github.com/leapmotion/leapjs-rigged-hand/                    
+ *                    
+ * Copyright 2014 LeapMotion, Inc                    
+ *                    
+ * Licensed under the Apache License, Version 2.0 (the "License");                    
+ * you may not use this file except in compliance with the License.                    
+ * You may obtain a copy of the License at                    
+ *                    
+ *     http://www.apache.org/licenses/LICENSE-2.0                    
+ *                    
+ * Unless required by applicable law or agreed to in writing, software                    
+ * distributed under the License is distributed on an "AS IS" BASIS,                    
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.                    
+ * See the License for the specific language governing permissions and                    
+ * limitations under the License.                    
+ *                    
+ */                    
+
 ;(function( window, undefined ){
 
 /**
@@ -454,8 +474,8 @@ function onReady(handler) {
         var camera, height, screenPosition, width;
         camera = scope.camera;
         console.assert(camera instanceof THREE.Camera, "screenPosition expects camera, got", camera);
-        width = parseInt(scope.renderer.domElement.style.width, 10);
-        height = parseInt(scope.renderer.domElement.style.height, 10);
+        width = parseInt(window.getComputedStyle(scope.renderer.domElement).width, 10);
+        height = parseInt(window.getComputedStyle(scope.renderer.domElement).height, 10);
         console.assert(width && height);
         screenPosition = new THREE.Vector3();
         if (position instanceof THREE.Vector3) {
