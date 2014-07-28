@@ -23,6 +23,16 @@ Automatically adds or removes hand meshes to/from the scene as they come in to o
   .connect()
 ```
 
+This will create a canvas with fixed position which covers the entire screen.  A neat trick is to allow pointer-events to pass through the canvas, so that you can interact with your page like normal.
+
+```css
+canvas{
+  pointer-events: none;
+}
+``
+
+
+
 ### Advanced
 
 ```coffeescript
@@ -94,7 +104,6 @@ Automatically adds or removes hand meshes to/from the scene as they come in to o
 Note that the size of this file is quite large, as it includes left and right hand models.  It is recommended that you
 include the files [from our CDN](https://developer.leapmotion.com/leapjs/plugins), as that will encourage browser caching
 and ensure the assets are gzipped from 845KB to 348KB before sending.
-
 
 ### Scope objects
 
