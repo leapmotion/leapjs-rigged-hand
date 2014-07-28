@@ -23,7 +23,7 @@ Automatically adds or removes hand meshes to/from the scene as they come in to o
   .connect()
 ```
 
-This will create a canvas with fixed position which covers the entire screen.  A neat trick is to allow pointer-events to pass through the canvas, so that you can interact with your page like normal.
+This will create a canvas with fixed position which covers the entire screen.  A neat trick is to allow pointer-events to pass through the canvas with one CSS rule, so that you can interact with your page like normal.
 
 ```css
 canvas{
