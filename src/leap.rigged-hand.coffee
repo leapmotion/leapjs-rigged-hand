@@ -336,9 +336,9 @@ Leap.plugin 'riggedHand', (scope = {})->
       screenPosition = new THREE.Vector3()
 
       if position instanceof THREE.Vector3
-        screenPosition.fromArray(position.toArray())
+        screenPosition.fromLeap(position.toArray())
       else
-        screenPosition.fromArray(position)
+        screenPosition.fromLeap(position)
           # the palm may have its base position scaled on top of leap coordinates:
           .sub(@positionRaw)
           .add(@position)

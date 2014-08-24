@@ -1,23 +1,3 @@
-/*                    
- * LeapJS Rigged Hand - v0.1.4 - 2014-08-23                    
- * http://github.com/leapmotion/leapjs-rigged-hand/                    
- *                    
- * Copyright 2014 LeapMotion, Inc                    
- *                    
- * Licensed under the Apache License, Version 2.0 (the "License");                    
- * you may not use this file except in compliance with the License.                    
- * You may obtain a copy of the License at                    
- *                    
- *     http://www.apache.org/licenses/LICENSE-2.0                    
- *                    
- * Unless required by applicable law or agreed to in writing, software                    
- * distributed under the License is distributed on an "AS IS" BASIS,                    
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.                    
- * See the License for the specific language governing permissions and                    
- * limitations under the License.                    
- *                    
- */                    
-
 ;(function( window, undefined ){
 
 /**
@@ -481,9 +461,9 @@ function onReady(handler) {
         console.assert(width && height);
         screenPosition = new THREE.Vector3();
         if (position instanceof THREE.Vector3) {
-          screenPosition.fromArray(position.toArray());
+          screenPosition.fromLeap(position.toArray());
         } else {
-          screenPosition.fromArray(position).sub(this.positionRaw).add(this.position);
+          screenPosition.fromLeap(position).sub(this.positionRaw).add(this.position);
         }
         screenPosition = projector.projectVector(screenPosition, camera);
         screenPosition.x = (screenPosition.x * width / 2) + width / 2;
@@ -527,8 +507,10 @@ function onReady(handler) {
       scope.parent.add(handMesh);
       leapHand.data('riggedHand.mesh', handMesh);
       palm = handMesh.children[0];
-      handMesh.helper = new THREE.SkeletonHelper(handMesh);
-      scope.parent.add(handMesh.helper);
+      if (scope.helper) {
+        handMesh.helper = new THREE.SkeletonHelper(handMesh);
+        scope.parent.add(handMesh.helper);
+      }
       palm.worldUp = new THREE.Vector3;
       palm.positionLeap = new THREE.Vector3;
       _ref = handMesh.fingers;
@@ -660,7 +642,9 @@ function onReady(handler) {
               }
             });
           }
-          handMesh.helper.update();
+          if (handMesh.helper) {
+            handMesh.helper.update();
+          }
           scope.positionDots(leapHand, handMesh, offset);
           if (scope.boneLabels) {
             palm.traverse(function(bone) {

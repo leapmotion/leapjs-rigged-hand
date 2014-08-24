@@ -71,6 +71,7 @@ var webglAvailable  = ( function () { try { var canvas = document.createElement(
     renderer: renderer,
     scale: getParam('scale'),
     positionScale: getParam('positionScale'),
+    helper: true,
     offset: new THREE.Vector3(0, 0, 0),
     renderFn: function() {
       renderer.render(scene, camera);
