@@ -87,6 +87,7 @@ controller.use('handHold')
     renderer: renderer # needed for screenPosition later
     scale: getParam('scale')                  # a number, default of 1
     positionScale: getParam('positionScale')  # a number, default of 1
+    helper: true
 
 #    This allows individual hand offsets
 #    offset: (leapHand)->

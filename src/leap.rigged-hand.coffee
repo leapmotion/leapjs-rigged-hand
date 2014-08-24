@@ -404,8 +404,9 @@ Leap.plugin 'riggedHand', (scope = {})->
     leapHand.data('riggedHand.mesh', handMesh)
     palm = handMesh.children[0]
 
-    handMesh.helper = new THREE.SkeletonHelper( handMesh )
-    scope.parent.add handMesh.helper
+    if scope.helper
+      handMesh.helper = new THREE.SkeletonHelper( handMesh )
+      scope.parent.add handMesh.helper
 
     # Initialize Vectors for later use
     # actually we need the above so that position is factored in
@@ -555,7 +556,8 @@ Leap.plugin 'riggedHand', (scope = {})->
               bone.worldDirection.subVectors(bone.children[0].positionLeap, bone.positionLeap).normalize()
               bone.positionFromWorld(bone.children[0].positionLeap, bone.positionLeap)
 
-        handMesh.helper.update()
+        if handMesh.helper
+          handMesh.helper.update()
 
         scope.positionDots(leapHand, handMesh, offset)
 
