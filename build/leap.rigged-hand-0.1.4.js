@@ -1,5 +1,5 @@
 /*                    
- * LeapJS Rigged Hand - v0.1.4 - 2014-07-19                    
+ * LeapJS Rigged Hand - v0.1.4 - 2014-08-25                    
  * http://github.com/leapmotion/leapjs-rigged-hand/                    
  *                    
  * Copyright 2014 LeapMotion, Inc                    
@@ -418,9 +418,11 @@ function onReady(handler) {
         return document.body.appendChild(scope.renderer.domElement);
       });
     }
-    scope.renderFn || (scope.renderFn = function() {
-      return scope.renderer.render(scope.scene, scope.camera);
-    });
+    if (scope.renderFn === void 0) {
+      scope.renderFn = function() {
+        return scope.renderer.render(scope.scene, scope.camera);
+      };
+    }
     projector = new THREE.Projector();
     spareMeshes = {
       left: [],

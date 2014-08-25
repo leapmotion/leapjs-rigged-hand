@@ -260,8 +260,9 @@ Leap.plugin 'riggedHand', (scope = {})->
 
 
 
-  scope.renderFn ||= ->
-    scope.renderer.render(scope.scene, scope.camera)
+  if scope.renderFn == undefined
+    scope.renderFn = ->
+      scope.renderer.render(scope.scene, scope.camera)
 
 
   projector = new THREE.Projector()
