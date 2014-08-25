@@ -360,8 +360,8 @@ function onReady(handler) {
     pointLight.position = new THREE.Vector3(-20, 10, 0);
     pointLight.lookAt(new THREE.Vector3(0, 0, 0));
     this.scene.add(pointLight);
-    this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
-    this.camera.position.fromArray([0, 6, 30]);
+    this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
+    this.camera.position.fromArray([0, 160, 400]);
     this.camera.lookAt(new THREE.Vector3(0, 0, 0));
     if (!this.renderer) {
       this.renderer = new THREE.WebGLRenderer({
@@ -396,7 +396,10 @@ function onReady(handler) {
     this.use('versionCheck', {
       requiredProtocolVersion: 6
     });
-    scope.offset || (scope.offset = new THREE.Vector3(0, -10, 0));
+    if (scope.offset === void 0) {
+      scope.offset = new THREE.Vector3(0, -100, 0);
+    }
+    scope.offset || (scope.offset = new THREE.Vector3(0, 0, 0));
     scope.scale || (scope.scale = 1);
     scope.positionScale || (scope.positionScale = 1);
     scope.initScene = initScene;
@@ -440,7 +443,6 @@ function onReady(handler) {
       _extend(data.materials[0], scope.materialOptions);
       _extend(data.geometry, scope.geometryOptions);
       handMesh = new THREE.SkinnedMesh(data.geometry, data.materials[0]);
-      handMesh.scale.multiplyScalar(scope.scale);
       handMesh.positionRaw = new THREE.Vector3;
       handMesh.fingers = handMesh.children[0].children;
       handMesh.castShadow = true;
@@ -481,9 +483,9 @@ function onReady(handler) {
         console.assert(width && height);
         screenPosition = new THREE.Vector3();
         if (position instanceof THREE.Vector3) {
-          screenPosition.fromLeap(position.toArray(), this.leapScale);
+          screenPosition.fromLeap(position.toArray());
         } else {
-          screenPosition.fromLeap(position, this.leapScale).sub(this.positionRaw).add(this.position);
+          screenPosition.fromLeap(position).sub(this.positionRaw).add(this.position);
         }
         screenPosition = projector.projectVector(screenPosition, camera);
         screenPosition.x = (screenPosition.x * width / 2) + width / 2;
@@ -492,10 +494,14 @@ function onReady(handler) {
         return screenPosition;
       };
       handMesh.scenePosition = function(leapPosition, scenePosition, offset) {
-        return scenePosition.fromLeap(leapPosition, handMesh.leapScale, offset).sub(handMesh.positionRaw).add(handMesh.position);
+        return scenePosition.fromLeap(leapPosition, offset).sub(handMesh.positionRaw).add(handMesh.position);
       };
       handMesh.scaleFromHand = function(leapHand) {
-        return handMesh.leapScale = (new THREE.Vector3).subVectors((new THREE.Vector3).fromArray(leapHand.fingers[2].pipPosition), (new THREE.Vector3).fromArray(leapHand.fingers[2].mcpPosition)).length() / handMesh.fingers[2].children[0].position.length() / scope.scale;
+        var middleProximalLeapLength, middleProximalMeshLength;
+        middleProximalLeapLength = (new THREE.Vector3).subVectors((new THREE.Vector3).fromArray(leapHand.fingers[2].pipPosition), (new THREE.Vector3).fromArray(leapHand.fingers[2].mcpPosition)).length();
+        middleProximalMeshLength = handMesh.fingers[2].children[0].position.length();
+        handMesh.leapScale = (middleProximalLeapLength / middleProximalMeshLength) * scope.scale;
+        return handMesh.scale.set(handMesh.leapScale, handMesh.leapScale, handMesh.leapScale);
       };
       return handMesh;
     };
@@ -512,8 +518,8 @@ function onReady(handler) {
     };
     createMesh(rigs['right']);
     if (!THREE.Vector3.prototype.fromLeap) {
-      THREE.Vector3.prototype.fromLeap = function(array, scale, offset) {
-        return this.fromArray(array).divideScalar(scale).add(offset || scope.offset);
+      THREE.Vector3.prototype.fromLeap = function(array, offset) {
+        return this.fromArray(array).add(offset || scope.offset);
       };
     }
     zeroVector = new THREE.Vector3(0, 0, 0);
@@ -523,8 +529,10 @@ function onReady(handler) {
       scope.parent.add(handMesh);
       leapHand.data('riggedHand.mesh', handMesh);
       palm = handMesh.children[0];
-      handMesh.helper = new THREE.SkeletonHelper(handMesh);
-      scope.parent.add(handMesh.helper);
+      if (scope.helper) {
+        handMesh.helper = new THREE.SkeletonHelper(handMesh);
+        scope.parent.add(handMesh.helper);
+      }
       palm.worldUp = new THREE.Vector3;
       palm.positionLeap = new THREE.Vector3;
       _ref = handMesh.fingers;
@@ -580,14 +588,14 @@ function onReady(handler) {
       }
     };
     scope.dots = {};
-    basicDotMesh = new THREE.Mesh(new THREE.IcosahedronGeometry(.1, 1), new THREE.MeshNormalMaterial());
+    basicDotMesh = new THREE.Mesh(new THREE.IcosahedronGeometry(2, 1), new THREE.MeshNormalMaterial());
     scope.positionDots = function(leapHand, handMesh, offset) {
       var i, leapFinger, point, _i, _len, _ref, _results;
       if (!scope.dotsMode) {
         return;
       }
       if (!scope.dots["palmPosition"]) {
-        scope.dots["palmPosition"] = new THREE.Mesh(new THREE.IcosahedronGeometry(.4, 1), new THREE.MeshNormalMaterial());
+        scope.dots["palmPosition"] = new THREE.Mesh(new THREE.IcosahedronGeometry(4, 1), new THREE.MeshNormalMaterial());
         scope.parent.add(scope.dots["palmPosition"]);
       }
       handMesh.scenePosition(leapHand["palmPosition"], scope.dots["palmPosition"].position, offset);
@@ -642,7 +650,7 @@ function onReady(handler) {
           palm.up.fromArray(leapHand.palmNormal).multiplyScalar(-1);
           palm.worldUp.fromArray(leapHand.palmNormal).multiplyScalar(-1);
           offset = typeof scope.offset === 'function' ? scope.offset(leapHand) : scope.offset;
-          handMesh.positionRaw.fromLeap(leapHand.palmPosition, handMesh.leapScale, offset);
+          handMesh.positionRaw.fromLeap(leapHand.palmPosition, offset);
           handMesh.position.copy(handMesh.positionRaw).multiplyScalar(scope.positionScale);
           handMesh.matrix.lookAt(palm.worldDirection, zeroVector, palm.up);
           palm.worldQuaternion.setFromRotationMatrix(handMesh.matrix);
@@ -656,7 +664,9 @@ function onReady(handler) {
               }
             });
           }
-          handMesh.helper.update();
+          if (handMesh.helper) {
+            handMesh.helper.update();
+          }
           scope.positionDots(leapHand, handMesh, offset);
           if (scope.boneLabels) {
             palm.traverse(function(bone) {

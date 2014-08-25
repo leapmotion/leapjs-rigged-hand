@@ -20,7 +20,7 @@ initScene = (element)->
   renderer.setSize(window.innerWidth, window.innerHeight)
   element.appendChild(renderer.domElement)
 
-  axis = new THREE.AxisHelper(5)
+  axis = new THREE.AxisHelper(40)
   scene.add axis
 
   scene.add new THREE.AmbientLight(0x888888)
@@ -38,7 +38,7 @@ initScene = (element)->
   )
 
 
-  camera.position.fromArray([0,6,30])
+  camera.position.fromArray([0,160,400])
   camera.lookAt(new THREE.Vector3(0, 0, 0))
   window.controls = new THREE.TrackballControls( camera )
   scene.add(camera)
@@ -78,7 +78,7 @@ controller.use('handHold')
 #    quaternion: (new THREE.Quaternion).setFromEuler(new THREE.Euler(0, Math.PI / 2, Math.PI / 2))
     position: new THREE.Vector3(1,0,0)
 #    scale: ->
-#      new THREE.Vector3(Math.pow(Math.sin( (new Date).getTime() / 1000 * 3), 2) + 1, 1, 1)
+#      new THREE.Vector3(0.5,0.5,0.5)
   })
   .use('handEntry')
   .use('screenPosition')
@@ -87,6 +87,7 @@ controller.use('handHold')
     renderer: renderer # needed for screenPosition later
     scale: getParam('scale')                  # a number, default of 1
     positionScale: getParam('positionScale')  # a number, default of 1
+    helper: true
 
 #    This allows individual hand offsets
 #    offset: (leapHand)->
