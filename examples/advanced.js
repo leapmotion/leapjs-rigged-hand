@@ -23,7 +23,7 @@ function getParam(name) {
     renderer.setClearColor(0x000000, 1);
     renderer.setSize(window.innerWidth, window.innerHeight);
     element.appendChild(renderer.domElement);
-    axis = new THREE.AxisHelper(5);
+    axis = new THREE.AxisHelper(40);
     scene.add(axis);
     scene.add(new THREE.AmbientLight(0x888888));
     pointLight = new THREE.PointLight(0xFFffff);
@@ -31,7 +31,7 @@ function getParam(name) {
     pointLight.lookAt(new THREE.Vector3(0, 0, 0));
     scene.add(pointLight);
     window.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
-    camera.position.fromArray([0, 6, 30]);
+    camera.position.fromArray([0, 160, 400]);
     camera.lookAt(new THREE.Vector3(0, 0, 0));
     window.controls = new THREE.TrackballControls(camera);
     scene.add(camera);
@@ -71,6 +71,7 @@ var webglAvailable  = ( function () { try { var canvas = document.createElement(
     renderer: renderer,
     scale: getParam('scale'),
     positionScale: getParam('positionScale'),
+    helper: true,
     offset: new THREE.Vector3(0, 0, 0),
     renderFn: function() {
       renderer.render(scene, camera);
