@@ -1,8 +1,8 @@
 {
   "name": "leapjs-rigged-hand",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "WebGL Rigged hand for LeapJS",
-  "main": "main/leapjs-plugins-0.1.0.js",
+  "main": "main/leapjs-rigged-hand-0.1.5.js",
   "dependencies": {},
   "devDependencies": {
     "coffee-script": ">=1.7.1",
