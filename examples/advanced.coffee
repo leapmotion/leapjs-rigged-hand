@@ -168,3 +168,12 @@ if getParam('playback')
   })
 
 
+if getParam('boneHand')
+  riggedHand = controller.plugins.riggedHand
+
+  controller.use('boneHand', {
+    renderer: riggedHand.renderer
+    scene: riggedHand.parent
+    camera: riggedHand.camera
+    render: ->
+  })

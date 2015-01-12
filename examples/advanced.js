@@ -6,7 +6,7 @@ function getParam(name) {
         results = regex.exec(location.search);
     return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
 };
-  var controller, cursor, initScene, stats;
+  var controller, cursor, initScene, riggedHand, stats;
 
   window.scene = null;
 
@@ -140,6 +140,16 @@ var webglAvailable  = ( function () { try { var canvas = document.createElement(
       recording: 'examples/confidence2-49fps.json.lz',
       autoPlay: true,
       pauseOnHand: true
+    });
+  }
+
+  if (getParam('boneHand')) {
+    riggedHand = controller.plugins.riggedHand;
+    controller.use('boneHand', {
+      renderer: riggedHand.renderer,
+      scene: riggedHand.parent,
+      camera: riggedHand.camera,
+      render: function() {}
     });
   }
 
