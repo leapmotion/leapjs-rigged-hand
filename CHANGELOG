@@ -1,3 +1,8 @@
+# 0.1.6
+ - Fix an issue introduced in 0.1.5 which caused the hand mesh to be incorrectly scaled
+ - Remove deprecated scale and offset options (please use transform plugin instead)
+
+
 # 0.1.5
  - Fixed issue where rigged hand would not scale correctly based upon leap frame data
  - Scale and Offset parameters are now discouraged in favor of the transform plugin
