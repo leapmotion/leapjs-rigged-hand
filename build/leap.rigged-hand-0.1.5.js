@@ -494,7 +494,7 @@ function onReady(handler) {
       handMesh.scaleFromHand = function(leapHand) {
         var middleProximalLeapLength, middleProximalMeshLength;
         middleProximalLeapLength = (new THREE.Vector3).subVectors((new THREE.Vector3).fromArray(leapHand.fingers[2].pipPosition), (new THREE.Vector3).fromArray(leapHand.fingers[2].mcpPosition)).length();
-        middleProximalMeshLength = handMesh.fingers[2].children[0].position.length();
+        middleProximalMeshLength = handMesh.fingers[2].position.length();
         handMesh.leapScale = middleProximalLeapLength / middleProximalMeshLength;
         return handMesh.scale.set(handMesh.leapScale, handMesh.leapScale, handMesh.leapScale);
       };

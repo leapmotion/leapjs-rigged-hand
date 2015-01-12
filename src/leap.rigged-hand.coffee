@@ -359,7 +359,7 @@ Leap.plugin 'riggedHand', (scope = {})->
         (new THREE.Vector3).fromArray(leapHand.fingers[2].mcpPosition)
       ).length()
       # skinnedmesh positions are relative distances to the parent bone
-      middleProximalMeshLength = handMesh.fingers[2].children[0].position.length()
+      middleProximalMeshLength = handMesh.fingers[2].position.length()
 
       handMesh.leapScale = ( middleProximalLeapLength / middleProximalMeshLength )
       handMesh.scale.set( handMesh.leapScale, handMesh.leapScale, handMesh.leapScale )
