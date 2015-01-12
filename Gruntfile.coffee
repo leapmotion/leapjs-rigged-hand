@@ -8,6 +8,7 @@ module.exports = (grunt) ->
     watch: {
       options: {
         livereload: true
+        atBegin: true
       }
       coffee: {
         files: ['src/*.coffee', 'examples/*.coffee'],
