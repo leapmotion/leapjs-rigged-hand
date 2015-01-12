@@ -1,8 +1,8 @@
 /*                    
- * LeapJS Rigged Hand - v0.1.5 - 2014-08-26                    
+ * LeapJS Rigged Hand - v0.1.5 - 2015-01-12                    
  * http://github.com/leapmotion/leapjs-rigged-hand/                    
  *                    
- * Copyright 2014 LeapMotion, Inc                    
+ * Copyright 2015 LeapMotion, Inc                    
  *                    
  * Licensed under the Apache License, Version 2.0 (the "License");                    
  * you may not use this file except in compliance with the License.                    
@@ -396,11 +396,6 @@ function onReady(handler) {
     this.use('versionCheck', {
       requiredProtocolVersion: 6
     });
-    if (scope.offset === void 0) {
-      scope.offset = new THREE.Vector3(0, -100, 0);
-    }
-    scope.offset || (scope.offset = new THREE.Vector3(0, 0, 0));
-    scope.scale || (scope.scale = 1);
     scope.positionScale || (scope.positionScale = 1);
     scope.initScene = initScene;
     controller = this;
@@ -483,9 +478,9 @@ function onReady(handler) {
         console.assert(width && height);
         screenPosition = new THREE.Vector3();
         if (position instanceof THREE.Vector3) {
-          screenPosition.fromLeap(position.toArray());
+          screenPosition.fromArray(position.toArray());
         } else {
-          screenPosition.fromLeap(position).sub(this.positionRaw).add(this.position);
+          screenPosition.fromArray(position).sub(this.positionRaw).add(this.position);
         }
         screenPosition = projector.projectVector(screenPosition, camera);
         screenPosition.x = (screenPosition.x * width / 2) + width / 2;
@@ -493,14 +488,14 @@ function onReady(handler) {
         console.assert(!isNaN(screenPosition.x) && !isNaN(screenPosition.x), 'x/y screen position invalid');
         return screenPosition;
       };
-      handMesh.scenePosition = function(leapPosition, scenePosition, offset) {
-        return scenePosition.fromLeap(leapPosition, offset).sub(handMesh.positionRaw).add(handMesh.position);
+      handMesh.scenePosition = function(leapPosition, scenePosition) {
+        return scenePosition.fromArray(leapPosition).sub(handMesh.positionRaw).add(handMesh.position);
       };
       handMesh.scaleFromHand = function(leapHand) {
         var middleProximalLeapLength, middleProximalMeshLength;
         middleProximalLeapLength = (new THREE.Vector3).subVectors((new THREE.Vector3).fromArray(leapHand.fingers[2].pipPosition), (new THREE.Vector3).fromArray(leapHand.fingers[2].mcpPosition)).length();
         middleProximalMeshLength = handMesh.fingers[2].children[0].position.length();
-        handMesh.leapScale = (middleProximalLeapLength / middleProximalMeshLength) * scope.scale;
+        handMesh.leapScale = middleProximalLeapLength / middleProximalMeshLength;
         return handMesh.scale.set(handMesh.leapScale, handMesh.leapScale, handMesh.leapScale);
       };
       return handMesh;
@@ -517,11 +512,6 @@ function onReady(handler) {
       return handMesh;
     };
     createMesh(rigs['right']);
-    if (!THREE.Vector3.prototype.fromLeap) {
-      THREE.Vector3.prototype.fromLeap = function(array, offset) {
-        return this.fromArray(array).add(offset || scope.offset);
-      };
-    }
     zeroVector = new THREE.Vector3(0, 0, 0);
     addMesh = function(leapHand) {
       var handMesh, palm, rigFinger, _i, _len, _ref;
@@ -589,7 +579,7 @@ function onReady(handler) {
     };
     scope.dots = {};
     basicDotMesh = new THREE.Mesh(new THREE.IcosahedronGeometry(2, 1), new THREE.MeshNormalMaterial());
-    scope.positionDots = function(leapHand, handMesh, offset) {
+    scope.positionDots = function(leapHand, handMesh) {
       var i, leapFinger, point, _i, _len, _ref, _results;
       if (!scope.dotsMode) {
         return;
@@ -598,7 +588,7 @@ function onReady(handler) {
         scope.dots["palmPosition"] = new THREE.Mesh(new THREE.IcosahedronGeometry(4, 1), new THREE.MeshNormalMaterial());
         scope.parent.add(scope.dots["palmPosition"]);
       }
-      handMesh.scenePosition(leapHand["palmPosition"], scope.dots["palmPosition"].position, offset);
+      handMesh.scenePosition(leapHand["palmPosition"], scope.dots["palmPosition"].position);
       _ref = leapHand.fingers;
       _results = [];
       for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
@@ -613,7 +603,7 @@ function onReady(handler) {
               scope.dots["" + point + "-" + i] = basicDotMesh.clone();
               scope.parent.add(scope.dots["" + point + "-" + i]);
             }
-            _results1.push(handMesh.scenePosition(leapFinger["" + point + "Position"], scope.dots["" + point + "-" + i].position, offset));
+            _results1.push(handMesh.scenePosition(leapFinger["" + point + "Position"], scope.dots["" + point + "-" + i].position));
           }
           return _results1;
         })());
@@ -624,7 +614,7 @@ function onReady(handler) {
     this.on('handLost', removeMesh);
     return {
       frame: function(frame) {
-        var boneColors, face, faceIndices, geometry, handMesh, hue, i, j, leapHand, lightness, mcp, offset, palm, saturation, weights, xBoneHSL, yBoneHSL, _base, _i, _j, _k, _l, _len, _len1, _len2, _len3, _name, _name1, _ref, _ref1, _ref2, _ref3;
+        var boneColors, face, faceIndices, geometry, handMesh, hue, i, j, leapHand, lightness, mcp, palm, saturation, weights, xBoneHSL, yBoneHSL, _base, _i, _j, _k, _l, _len, _len1, _len2, _len3, _name, _name1, _ref, _ref1, _ref2, _ref3;
         if (scope.stats) {
           scope.stats.begin();
         }
@@ -649,8 +639,7 @@ function onReady(handler) {
           palm.worldDirection.fromArray(leapHand.direction);
           palm.up.fromArray(leapHand.palmNormal).multiplyScalar(-1);
           palm.worldUp.fromArray(leapHand.palmNormal).multiplyScalar(-1);
-          offset = typeof scope.offset === 'function' ? scope.offset(leapHand) : scope.offset;
-          handMesh.positionRaw.fromLeap(leapHand.palmPosition, offset);
+          handMesh.positionRaw.fromArray(leapHand.palmPosition);
           handMesh.position.copy(handMesh.positionRaw).multiplyScalar(scope.positionScale);
           handMesh.matrix.lookAt(palm.worldDirection, zeroVector, palm.up);
           palm.worldQuaternion.setFromRotationMatrix(handMesh.matrix);
@@ -667,7 +656,7 @@ function onReady(handler) {
           if (handMesh.helper) {
             handMesh.helper.update();
           }
-          scope.positionDots(leapHand, handMesh, offset);
+          scope.positionDots(leapHand, handMesh);
           if (scope.boneLabels) {
             palm.traverse(function(bone) {
               var element, screenPosition;

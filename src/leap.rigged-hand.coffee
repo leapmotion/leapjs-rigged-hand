@@ -1,8 +1,6 @@
 # todo: document that this must be run via http server
 # Options include:
 # parent - Optional - A ThreeJS.Object3d, such as a scene or camera, which the hands will be added to
-# offset - ThreeJS.Vector3, a constant offset between the parent and the hands.  Default is new THREE.Vector3(0,-10,0)
-# scale - An integer, sizing the rigged hand relative to your scene.  Default is 1
 # renderFn - If provided, this will be executed on every animation frame.
 #            E.g. function(){ renderer.render(scene, camera) }
 # materialOptions - A hash of properties for the material, such as wireframe: true
@@ -229,10 +227,6 @@ Leap.plugin 'riggedHand', (scope = {})->
   @use('handEntry')
   @use('versionCheck', {requiredProtocolVersion: 6})
 
-  if scope.offset == undefined
-    scope.offset = new THREE.Vector3(0,-100,0)
-  scope.offset ||= new THREE.Vector3(0,0,0)
-  scope.scale ||= 1
   # this allow the hand to move disproportionately to its size.
   scope.positionScale ||= 1
   scope.initScene = initScene
@@ -337,9 +331,9 @@ Leap.plugin 'riggedHand', (scope = {})->
       screenPosition = new THREE.Vector3()
 
       if position instanceof THREE.Vector3
-        screenPosition.fromLeap(position.toArray())
+        screenPosition.fromArray(position.toArray())
       else
-        screenPosition.fromLeap(position)
+        screenPosition.fromArray(position)
           # the palm may have its base position scaled on top of leap coordinates:
           .sub(@positionRaw)
           .add(@position)
@@ -352,8 +346,8 @@ Leap.plugin 'riggedHand', (scope = {})->
 
       screenPosition
 
-    handMesh.scenePosition = (leapPosition, scenePosition, offset) ->
-      scenePosition.fromLeap(leapPosition, offset)
+    handMesh.scenePosition = (leapPosition, scenePosition) ->
+      scenePosition.fromArray(leapPosition)
         # these two add the base offset, factoring in for positionScale
         .sub(handMesh.positionRaw)
         .add(handMesh.position)
@@ -367,7 +361,7 @@ Leap.plugin 'riggedHand', (scope = {})->
       # skinnedmesh positions are relative distances to the parent bone
       middleProximalMeshLength = handMesh.fingers[2].children[0].position.length()
 
-      handMesh.leapScale = ( middleProximalLeapLength / middleProximalMeshLength ) * scope.scale
+      handMesh.leapScale = ( middleProximalLeapLength / middleProximalMeshLength )
       handMesh.scale.set( handMesh.leapScale, handMesh.leapScale, handMesh.leapScale )
 
     handMesh
@@ -388,11 +382,6 @@ Leap.plugin 'riggedHand', (scope = {})->
 
   # initialize JSONloader for speed
   createMesh(rigs['right'])
-
-  unless THREE.Vector3.prototype.fromLeap
-    # converts a leap array [x,y,z] in to a scene-based vector3.
-    THREE.Vector3.prototype.fromLeap = (array, offset)->
-      @fromArray(array).add(offset || scope.offset)
 
   zeroVector = new THREE.Vector3(0,0,0)
   
@@ -483,7 +472,7 @@ Leap.plugin 'riggedHand', (scope = {})->
   )
 
 
-  scope.positionDots = (leapHand, handMesh, offset)->
+  scope.positionDots = (leapHand, handMesh)->
     return unless scope.dotsMode
 
     unless scope.dots["palmPosition"]
@@ -493,7 +482,7 @@ Leap.plugin 'riggedHand', (scope = {})->
       )
       scope.parent.add scope.dots["palmPosition"]
 
-    handMesh.scenePosition(leapHand["palmPosition"], scope.dots["palmPosition"].position, offset)
+    handMesh.scenePosition(leapHand["palmPosition"], scope.dots["palmPosition"].position)
 
     for leapFinger, i in leapHand.fingers
       for point in ['carp', 'mcp', 'pip', 'dip', 'tip']
@@ -503,7 +492,7 @@ Leap.plugin 'riggedHand', (scope = {})->
           scope.dots["#{point}-#{i}"] = basicDotMesh.clone()
           scope.parent.add scope.dots["#{point}-#{i}"]
 
-        handMesh.scenePosition(leapFinger["#{point}Position"], scope.dots["#{point}-#{i}"].position, offset)
+        handMesh.scenePosition(leapFinger["#{point}Position"], scope.dots["#{point}-#{i}"].position)
 
   @on 'handFound', addMesh
   @on 'handLost',  removeMesh
@@ -538,12 +527,9 @@ Leap.plugin 'riggedHand', (scope = {})->
         palm.up.fromArray(leapHand.palmNormal).multiplyScalar(-1)
         palm.worldUp.fromArray(leapHand.palmNormal).multiplyScalar(-1)
 
-        # position mesh to palm
-        offset = if (typeof scope.offset == 'function') then scope.offset(leapHand) else scope.offset
-
         # hand mesh (root is where) is set to the palm position
         # this should mean it would move in sync with a fixed offset
-        handMesh.positionRaw.fromLeap(leapHand.palmPosition, offset)
+        handMesh.positionRaw.fromArray(leapHand.palmPosition)
         handMesh.position.copy(handMesh.positionRaw).multiplyScalar(scope.positionScale)
 
         handMesh.matrix.lookAt(palm.worldDirection, zeroVector, palm.up)
@@ -560,7 +546,7 @@ Leap.plugin 'riggedHand', (scope = {})->
         if handMesh.helper
           handMesh.helper.update()
 
-        scope.positionDots(leapHand, handMesh, offset)
+        scope.positionDots(leapHand, handMesh)
 
 
         if scope.boneLabels
