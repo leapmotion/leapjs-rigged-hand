@@ -186,3 +186,4 @@ Contributing
 
 #### Open an issue!
  - https://github.com/leapmotion/leapjs-plugins/issues
+ - We listen for bug reports, feature requests, contributions, an so on :-)
