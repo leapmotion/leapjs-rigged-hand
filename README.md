@@ -178,3 +178,11 @@ controller.on 'frame', (frame)->
     cursor.style.left = screenPosition.x
     cursor.style.bottom = screenPosition.y
 ```
+
+
+
+Contributing
+===============
+
+#### Open an issue!
+ - https://github.com/leapmotion/leapjs-plugins/issues
