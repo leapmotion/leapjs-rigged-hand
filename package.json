@@ -1,6 +1,6 @@
 {
   "name": "leapjs-rigged-hand",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "WebGL Rigged hand for LeapJS",
   "main": "main/leapjs-rigged-hand-0.1.6.js",
   "dependencies": {},

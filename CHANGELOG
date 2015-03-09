@@ -1,3 +1,6 @@
+# 0.1.7
+ - THREE.js r70 support
+
 # 0.1.6
  - Fix an issue introduced in 0.1.5 which caused the hand mesh to be incorrectly scaled
  - Remove deprecated scale and offset options (please use transform plugin instead)
