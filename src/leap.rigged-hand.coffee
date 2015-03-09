@@ -261,8 +261,6 @@ Leap.plugin 'riggedHand', (scope = {})->
       scope.renderer.render(scope.scene, scope.camera)
 
 
-  projector = new THREE.Projector()
-
   spareMeshes = {
     left: [],
     right: []
@@ -338,7 +336,7 @@ Leap.plugin 'riggedHand', (scope = {})->
           .sub(@positionRaw)
           .add(@position)
 
-      screenPosition = projector.projectVector(screenPosition, camera)
+      screenPosition.project(camera)
       screenPosition.x = (screenPosition.x * width / 2) + width / 2
       screenPosition.y = (screenPosition.y * height / 2) + height / 2
 

@@ -1,5 +1,5 @@
 /*                    
- * LeapJS Rigged Hand - v0.1.6 - 2015-01-12                    
+ * LeapJS Rigged Hand - v0.1.6 - 2015-03-09                    
  * http://github.com/leapmotion/leapjs-rigged-hand/                    
  *                    
  * Copyright 2015 LeapMotion, Inc                    
@@ -386,7 +386,7 @@ function onReady(handler) {
   };
 
   Leap.plugin('riggedHand', function(scope) {
-    var addMesh, basicDotMesh, controller, createMesh, getMesh, projector, removeMesh, spareMeshes, zeroVector,
+    var addMesh, basicDotMesh, controller, createMesh, getMesh, removeMesh, spareMeshes, zeroVector,
       _this = this;
     if (scope == null) {
       scope = {};
@@ -421,7 +421,6 @@ function onReady(handler) {
         return scope.renderer.render(scope.scene, scope.camera);
       };
     }
-    projector = new THREE.Projector();
     spareMeshes = {
       left: [],
       right: []
@@ -482,7 +481,7 @@ function onReady(handler) {
         } else {
           screenPosition.fromArray(position).sub(this.positionRaw).add(this.position);
         }
-        screenPosition = projector.projectVector(screenPosition, camera);
+        screenPosition.project(camera);
         screenPosition.x = (screenPosition.x * width / 2) + width / 2;
         screenPosition.y = (screenPosition.y * height / 2) + height / 2;
         console.assert(!isNaN(screenPosition.x) && !isNaN(screenPosition.x), 'x/y screen position invalid');
