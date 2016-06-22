@@ -54,7 +54,8 @@ canvas{
     # These options are merged with the material options hash
     # Any valid Three.js material options are valid here.
     materialOptions: {
-      wireframe: true
+      wireframe: true,
+      color: new THREE.Color(0xff0000)
     }
     geometryOptions: {}
 
